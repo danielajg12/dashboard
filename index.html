@@ -100,7 +100,7 @@
       <p class="claim">Piloto al 10% del universo, 2.1 millones de usuarios activos y alrededor de 120 canvases al mes. Qué se envía, qué se bloquea, a quién, y cuánto cuesta.</p>
     </div>
     <div class="period">
-      <span>Ventana</span>
+      <span>Serie histórica en gráficas</span>
       <div class="seg" id="periodSeg">
         <button data-n="3" type="button">3 meses</button>
         <button data-n="6" class="on" type="button">6 meses</button>
@@ -113,7 +113,7 @@
     <button class="chip" data-area="crm" type="button">CRM</button>
     <button class="chip" data-area="pm" type="button">Product Marketing</button>
     <button class="chip" data-area="brand" type="button">Brand</button>
-    <span class="note">Mock de especificación con datos sintéticos coherentes con el caso</span>
+    <span class="note" style="color:#B23A22;font-weight:700">Datos sintéticos, solo demostración</span>
   </div>
 
   <section class="cards" id="cards"></section>
@@ -121,7 +121,7 @@
   <section class="row2">
     <div class="panel">
       <div class="panel-head">
-        <div><h2>Presión sobre el cap y mensajes bloqueados</h2><span class="u">Porcentaje mensual, usuarios CREDIT en el piloto</span></div>
+        <div><h2>Presión sobre el cap y mensajes bloqueados</h2><span class="u" id="mainRange">Porcentaje mensual, usuarios CREDIT en el piloto</span></div>
         <div class="legend">
           <span><i style="background:var(--accent)"></i>Abort rate en el piloto</span>
           <span><i style="background:#C6D2CB"></i>Usuarios por encima del cap de email</span>
@@ -140,7 +140,7 @@
   <section class="row3">
     <div class="panel">
       <div class="panel-head">
-        <div><h2>Mix de campañas por volumen de envíos</h2><span class="u">Meta del modelo: 60% BAU / 40% ad-hoc</span></div>
+        <div><h2>Mix de campañas por volumen de envíos</h2><span class="u" id="mixRange">Meta del modelo: 60% BAU / 40% ad-hoc</span></div>
         <div class="legend">
           <span><i style="background:var(--accent)"></i>BAU</span>
           <span><i style="background:#F2B84B"></i>Ad-hoc</span>
@@ -188,7 +188,7 @@
   </section>
 
   <footer>
-    <span>Fuente: mart_crm.agg_canvas_monthly y mart_crm.fct_user_month · Último refresh: 03 jul 2026 06:12 CST · Cifras definitivas a D+7</span>
+    <span>Fuente: crm_analytics.agg_canvas_monthly y crm_analytics.fct_user_month · Último refresh: 03 jul 2026 06:12 CST · Cifras definitivas a D+7</span>
     <span>Cada tarjeta muestra su definición al pie. Las discusiones de una revisión mensual suelen ser sobre definiciones, no sobre resultados.</span>
   </footer>
 
@@ -350,6 +350,9 @@
       <div class="card"><span class="l">${esc(k.l)}</span><span class="v">${esc(k.v)}</span>
         <div class="d"><span class="pill ${k.flat ? 'flat' : (k.good ? 'good' : 'bad')}">${esc(k.d)}</span><span class="n">${esc(k.n)}</span></div>
         <span class="def">${esc(k.def)}</span></div>`).join('');
+    const rng = MESES.slice(-n)[0] + ' a ' + MESES[MESES.length - 1] + ' 2026 · ' + n + ' meses';
+    $('mainRange').textContent = 'Porcentaje mensual, usuarios CREDIT en el piloto · ' + rng;
+    $('mixRange').textContent = 'Meta del modelo: 60% BAU / 40% ad-hoc · ' + rng;
     $('mainChart').innerHTML = lineChart(d.abort.slice(-n), d.over.slice(-n), MESES.slice(-n));
     $('insights').innerHTML = d.insights.map(i => `<div class="ins"><b>${esc(i.s)}</b><span>${esc(i.t)}</span></div>`).join('');
     $('mixChart').innerHTML = stackedBars(MESES.slice(-n));
