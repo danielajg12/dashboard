@@ -52,7 +52,7 @@
   <div><div class="brand"><i></i><span>Gobernanza CRM · Revisión mensual</span></div>
     <h1 id="title">Cómo va el modelo de gobernanza</h1>
     <p class="claim">Piloto al 10% del universo, 2.1 millones de usuarios activos y alrededor de 120 canvases al mes.</p></div>
-  <div class="note">Datos sintéticos, solo demostración</div>
+  <div class="note">Datos sintéticos, solo demostración · todos los KPIs se recalculan desde las filas que pasan los filtros</div>
 </header>
 
 <div class="rule"><b>Solo periodos con atribución cerrada.</b> El mes en curso (julio 2026) está excluido hasta que cierre su ventana de 7 días. Último periodo definitivo: junio 2026.</div>
@@ -71,7 +71,7 @@
 <section id="panels"></section>
 
 <section class="panel" style="margin-bottom:20px">
-  <div class="panel-head"><div><h2>Canvases con mayor impacto</h2><span class="u">Último periodo definitivo · aborts y abort rate juntos, para no confundir volumen con desempeño</span></div>
+  <div class="panel-head"><div><h2>Canvases con mayor impacto</h2><span class="u">Último periodo, top 10 según el orden elegido · aborts y abort rate juntos, para no confundir volumen con desempeño</span></div>
     <div class="legend"><button class="sortbtn on" data-s="aborts" type="button">Ordenar por aborts</button><button class="sortbtn" data-s="rate" type="button">Ordenar por abort rate</button></div></div>
   <div class="tscroll"><table><thead><tr><th>Canvas</th><th>Área</th><th>Canal</th><th>Sends</th><th>Aborts</th><th>Abort rate</th><th>Usuarios afectados</th><th>Conversiones</th><th>Volumen</th></tr></thead><tbody id="rows"></tbody></table></div>
 </section>
@@ -82,44 +82,91 @@
 <script>
 (function () {
   const ACCENT='#00C06B', SOFT='#BFE9D6', PREV='#C6D2CB', AMBER='#F2B84B', INK='#06231D', GRID='#EDF1EE', FAINT='#8A968F', WARN='#B7791F';
-  const LABELS = { year:['Jul 25','Ago','Sep','Oct','Nov','Dic','Ene 26','Feb','Mar','Abr','May','Jun'], month:['Ene','Feb','Mar','Abr','May','Jun'], week:['S19','S20','S21','S22','S23','S24','S25','S26'] };
-  const CH = ['Email','Push','WhatsApp','SMS','In-app'];
-  const BASE = {
-    coverage:[8,8,8.5,9,9.5,10,10,10,10,10,10,10],                 // % de elegibles bajo el modelo
-    abort:[4.0,4.1,4.3,4.4,4.5,4.6,4.6,4.8,5.1,5.5,6.0,6.4],
-    abortCh:{Email:1.6,Push:2.0,WhatsApp:5.8,SMS:3.9,'In-app':null},   // último periodo, % ; In-app no calculable
-    satCh:{Email:41,Push:26,WhatsApp:88,SMS:74,'In-app':9},
-    p50:[6,6,6,6,7,7,7,7,7,7,7,7], p90:[11,11,12,12,12,12,13,13,13,13,13,13], p99:[18,18,19,19,20,20,21,21,21,21,21,21],
-    mixBau:[56,55,55,54,53,53,52,50,48,44,36,14], mixAdhoc:[26,27,27,28,29,29,30,32,34,39,48,72],
-    cost:[24.9,23.2,26.1,29.0,32.9,41.5,24.9,23.2,26.1,29.0,32.9,41.5].slice(0,12), dp:[48,45,50,56,65,85,48,45,50,56,65,85],
-    dpPerSend:[0.78,0.77,0.79,0.80,0.79,0.99,0.78,0.77,0.79,0.80,0.79,0.99],
-  };
-  BASE.cost=[19.8,20.5,21.9,23.0,24.1,24.9,24.9,23.2,26.1,29.0,32.9,41.5]; BASE.dp=[42,43,45,47,49,48,48,45,50,56,65,85]; BASE.dpPerSend=[.76,.76,.77,.77,.78,.78,.78,.77,.79,.80,.79,.99];
-  const M = {
-    area:{todas:1,crm:.8,pm:1.28,brand:1.08}, channel:{todos:1,email:.28,push:.33,whatsapp:2.3,sms:1.5,inapp:0}, mix:{todos:1,bau:.8,adhoc:1.35,lifecycle:.4},
-    product:{todos:1,credit:1.05,deposits:.85,luna:.7}, status:{todos:1,active:1.1,inactive:.85,churned:.9}, gov:{todos:1,in:1,out:0},
-  };
-  const CANVASES = [
-    {c:'Onboarding D3',a:'CRM',ch:'Push',s:1820000,ab:38200,u:31400,cv:4100},{c:'Promo Buen Fin',a:'Brand',ch:'WhatsApp',s:83600,ab:9600,u:8900,cv:180},
-    {c:'Recordatorio Pago',a:'CRM',ch:'SMS',s:412000,ab:15900,u:14100,cv:2600},{c:'Reactivación 30d',a:'CRM',ch:'Email',s:2180000,ab:12400,u:11800,cv:5300},
-    {c:'GTM Sept Teaser',a:'PM',ch:'Email',s:640000,ab:9100,u:8700,cv:1200},{c:'Cross-sell Depósitos',a:'PM',ch:'Email',s:241000,ab:5200,u:5000,cv:410},
-    {c:'Upgrade Línea Q3',a:'PM',ch:'Push',s:390000,ab:4400,u:4100,cv:1900},{c:'Test Asunto A/B',a:'CRM',ch:'Email',s:4200,ab:310,u:300,cv:12},
+  // ---------- dataset sintético ----------
+  // Grain: canvas × mes × producto × status × grupo de gobernanza. 12 meses (jul 2025 a jun 2026).
+  let seed = 7; const rnd = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
+  const MONTHS = ['2025-07','2025-08','2025-09','2025-10','2025-11','2025-12','2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'];
+  const MLAB = ['Jul 25','Ago','Sep','Oct','Nov','Dic','Ene 26','Feb','Mar','Abr','May','Jun'];
+  const CANVAS = [
+    ['Onboarding D3','CRM','Push','lifecycle',180000],['Reactivación 30d','CRM','Email','bau',210000],['Recordatorio Pago','CRM','SMS','bau',40000],
+    ['Bienvenida','CRM','Email','lifecycle',90000],['Cumpleaños','CRM','Push','bau',60000],['Test Asunto A/B','CRM','Email','adhoc',450],
+    ['Aviso de corte','CRM','Push','bau',150000],['Recordatorio in-app','CRM','In-app','bau',120000],['Win-back 90d','CRM','Email','lifecycle',70000],
+    ['GTM Sept Teaser','PM','Email','adhoc',60000],['Cross-sell Depósitos','PM','Email','bau',25000],['Upgrade Línea Q3','PM','Push','adhoc',40000],
+    ['Lanzamiento Luna','PM','Push','adhoc',55000],['Tips de producto','PM','In-app','bau',80000],['Encuesta NPS','PM','Email','adhoc',15000],
+    ['Promo Buen Fin','Brand','WhatsApp','adhoc',8000],['Marca Verano','Brand','Email','adhoc',30000],['Teaser Depósitos','Brand','Push','adhoc',20000],
+    ['Historias de clientes','Brand','Email','bau',18000],['Alianza comercio','Brand','WhatsApp','adhoc',6000],['Campaña de marca','Brand','In-app','adhoc',25000],
   ];
+  const PRODUCTS = [['credit',.55],['deposits',.3],['luna',.15]];
+  const STATUS = [['active',.7],['inactive',.2],['churned',.1]];
+  const ABORT_BASE = {Email:.032,Push:.040,WhatsApp:.116,SMS:.078,'In-app':null};
+  const DP_PER = {Email:3,Push:2,WhatsApp:5,SMS:5,'In-app':2};
+  const UNIT = {Email:.0015,Push:0,WhatsApp:.022,SMS:.0045,'In-app':0};
+  const DP_PRICE = .000382;
+  const TYPE_TREND = {bau:[1,.99,.98,.97,.96,.95,.93,.9,.86,.78,.64,.25], adhoc:[1,1.05,1.08,1.1,1.16,1.18,1.24,1.36,1.5,1.9,2.6,5.4], lifecycle:[1,1.01,1.02,1.03,1.04,1.05,1.06,1.07,1.08,1.09,1.1,1.11]};
+  const GOV_SHARE = [.08,.08,.085,.09,.095,.10,.10,.10,.10,.10,.10,.10];   // % de usuarios bajo el modelo por mes
+  const ROWS = [];
+  CANVAS.forEach(([name,area,ch,ty,base],ci)=>{
+    MONTHS.forEach((m,mi)=>{
+      const seasonal = mi===4 ? 1.1 : (mi===10||mi===11 ? 1.05 : 1);
+      const sendsTotal = base*8*TYPE_TREND[ty][mi]*seasonal*(0.9+rnd()*0.2);
+      PRODUCTS.forEach(([pr,ps])=>STATUS.forEach(([st,ss])=>['in','out'].forEach(gov=>{
+        const gshare = gov==='in'?GOV_SHARE[mi]:1-GOV_SHARE[mi];
+        const stMul = st==='active'?1.1:(st==='inactive'?.8:.6);
+        const attempts = sendsTotal*ps*ss*gshare*stMul;
+        if (attempts < 1) return;
+        const ar = ABORT_BASE[ch]==null ? 0 : (gov==='in' ? ABORT_BASE[ch]*(1+mi*0.045)*(st==='churned'?1.3:1) : 0);
+        const aborts = Math.round(attempts*ar), sends = Math.round(attempts-aborts);
+        const cr = (ch==='WhatsApp'?.129:ch==='In-app'?.069:ch==='SMS'?.043:ch==='Email'?.028:.016)*(st==='active'?1.2:st==='inactive'?.7:.4)*(ty==='bau'?1.1:1);
+        const clicks = Math.round(sends*cr), conv = Math.round(sends*cr*(ch==='WhatsApp'?.32:.20)*(pr==='credit'?1.1:.8));
+        const dp = sends*DP_PER[ch] + aborts*2;
+        ROWS.push({c:name,a:area,ch,ty,pr,st,gov,mi,sends,aborts,clicks,conv,dp,cost:sends*UNIT[ch]+dp*DP_PRICE,ci});
+      })));
+    });
+  });
+  // Elegibilidad: mes × canal × producto × status × gov → usuarios elegibles, en cap, percentiles de mensajes
+  const CH = ['Email','Push','WhatsApp','SMS','In-app']; const CAP = {Email:5,Push:9,WhatsApp:.5,SMS:.5,'In-app':9};
+  const ELIG = [];
+  MONTHS.forEach((m,mi)=>CH.forEach(ch=>PRODUCTS.forEach(([pr,ps])=>STATUS.forEach(([st,ss])=>['in','out'].forEach(gov=>{
+    const gshare = gov==='in'?GOV_SHARE[mi]:1-GOV_SHARE[mi];
+    const eligible = Math.round(2100000*ps*ss*gshare);
+    const satBase = {Email:.41,Push:.26,WhatsApp:.88,SMS:.74,'In-app':.09}[ch]*(0.85+mi*0.02)*(st==='active'?1.15:.6);
+    const hit = gov==='in' ? Math.round(eligible*Math.min(.97,satBase)) : 0;
+    const p50 = Math.max(0,Math.round((ch==='Push'?6:ch==='Email'?3:ch==='In-app'?5:0.3)*(st==='active'?1.2:.5)*(1+mi*.015)));
+    ELIG.push({mi,ch,pr,st,gov,eligible,hit,p50,p90:p50+Math.round(5+mi*.3),p99:p50+Math.round(12+mi*.5)});
+  })))));
+
+  // ---------- estado y filtros ----------
   const state = { period:'month', area:'todas', channel:'todos', mix:'todos', product:'todos', status:'todos', gov:'todos', sort:'aborts' };
-  const $ = id => document.getElementById(id);
-  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-  const mult = () => ['area','channel','mix','product','status','gov'].reduce((p,f)=>p*M[f][state[f]],1);
-  function win(s) { s=s.slice(); if (state.period==='month') s=s.slice(-6); if (state.period==='week'){ const l=s[s.length-1],p=s[s.length-2]; s=Array.from({length:8},(_,i)=>p+(l-p)*(i/7)); } return s; }
-  const pct=v=>v.toFixed(1)+'%', usd=v=>'$'+v.toFixed(1)+'K';
-  function delta(s,pp){ const a=s[s.length-2],b=s[s.length-1]; const d=pp?(b-a):((b/a-1)*100); return {d, t:(d>=0?'+':'')+d.toFixed(1)+(pp?' pp':'%')}; }
+  const $ = id => document.getElementById(id); const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const AREA = {crm:'CRM',pm:'PM',brand:'Brand'}, CHN = {email:'Email',push:'Push',whatsapp:'WhatsApp',sms:'SMS',inapp:'In-app'};
+  const pass = r => (state.area==='todas'||r.a===AREA[state.area]) && (state.channel==='todos'||r.ch===CHN[state.channel]) && (state.mix==='todos'||r.ty===state.mix)
+                 && (state.product==='todos'||r.pr===state.product) && (state.status==='todos'||r.st===state.status) && (state.gov==='todos'||r.gov===state.gov);
+  const passE = e => (state.channel==='todos'||e.ch===CHN[state.channel]) && (state.product==='todos'||e.pr===state.product) && (state.status==='todos'||e.st===state.status) && (state.gov==='todos'||e.gov===state.gov);
+  const monthsIdx = () => state.period==='year' ? [...Array(12).keys()] : state.period==='month' ? [6,7,8,9,10,11] : [10,11];
+  const labels = () => state.period==='week' ? ['S19','S20','S21','S22','S23','S24','S25','S26'] : monthsIdx().map(i=>MLAB[i]);
+  const sum = (arr,f) => arr.reduce((p,r)=>p+f(r),0);
+  // Serie por periodo: agrega las filas filtradas por mes; en semana reparte los últimos dos meses en 8 semanas.
+  function series(fn) {
+    const rows = ROWS.filter(pass); const per = monthsIdx().map(mi=>fn(rows.filter(r=>r.mi===mi)));
+    if (state.period!=='week') return per;
+    const [a,b] = per; return Array.from({length:8},(_,i)=> i<4 ? a*(1+(i-1.5)*0.03) : b*(1+(i-5.5)*0.03));
+  }
+  function seriesE(fn) {
+    const rows = ELIG.filter(passE); const per = monthsIdx().map(mi=>fn(rows.filter(r=>r.mi===mi)));
+    if (state.period!=='week') return per; const [a,b]=per; return Array.from({length:8},(_,i)=> i<4?a:b);
+  }
+  // El abort rate y la saturación se definen sobre los usuarios bajo el modelo: fuera del modelo no hay caps.
+  const rate = (rows) => { rows=rows.filter(r=>r.gov==='in'); const s=sum(rows,r=>r.ch==='In-app'?0:r.sends), a=sum(rows,r=>r.ch==='In-app'?0:r.aborts); return s+a ? a/(s+a)*100 : 0; };
+  const pct=v=>v.toFixed(1)+'%', usd=v=>'$'+(v/1000).toFixed(1)+'K';
+  function delta(s,pp){ const a=s[s.length-2],b=s[s.length-1]; if(!a&&!pp) return {d:0,t:'sin base'}; const d=pp?(b-a):((b/a-1)*100); return {d, t:(d>=0?'+':'')+d.toFixed(1)+(pp?' pp':'%')}; }
 
   // ---------- gráficas ----------
   function lineChart(cur, labels, o={}) {
     const W=560,H=190,PL=46,PR=8,PT=14,PB=26; const all=cur.concat(...(o.extra||[]).map(e=>e.s));
-    const max=Math.max(...all)*1.15, min=0; const x=i=>PL+i*(W-PL-PR)/Math.max(1,cur.length-1); const y=v=>PT+(1-(v-min)/(max-min||1))*(H-PT-PB);
+    const max=Math.max(...all,0.0001)*1.15, min=0; const x=i=>PL+i*(W-PL-PR)/Math.max(1,cur.length-1); const y=v=>PT+(1-(v-min)/(max-min||1))*(H-PT-PB);
     const line=a=>a.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join(' ');
     let s=`<svg viewBox="0 0 ${W} ${H}">`;
-    if (o.band) s+=`<rect x="${PL}" y="${y(o.band[1])}" width="${W-PL-PR}" height="${y(o.band[0])-y(o.band[1])}" fill="rgba(0,192,107,.09)"/>`;
+    if (o.band) s+=`<rect x="${PL}" y="${y(Math.min(o.band[1],max))}" width="${W-PL-PR}" height="${Math.max(0,y(o.band[0])-y(Math.min(o.band[1],max)))}" fill="rgba(0,192,107,.09)"/>`;
     [0,.5,1].map(t=>min+t*(max-min)).forEach(t=>{ s+=`<line x1="${PL}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke="${GRID}"/><text x="${PL-10}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="${FAINT}">${o.tick?o.tick(t):t.toFixed(1)}</text>`; });
     (o.extra||[]).forEach(e=>{ s+=`<path d="${line(e.s)}" fill="none" stroke="${e.c}" stroke-width="2" ${e.dash?'stroke-dasharray="5 5"':''}/>`; });
     if (o.fill) s+=`<path d="${line(cur)} L ${x(cur.length-1)} ${H-PB} L ${PL} ${H-PB} Z" fill="rgba(0,192,107,.12)"/>`;
@@ -128,23 +175,21 @@
     labels.forEach((m,i)=>{ if (labels.length>8 && i%2) return; s+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle" font-size="11" fill="${FAINT}">${m}</text>`; });
     return s+'</svg>';
   }
-  function bandChart(labels) {
-    const p50=win(BASE.p50), p90=win(BASE.p90), p99=win(BASE.p99); const W=560,H=190,PL=40,PR=8,PT=14,PB=26;
-    const max=Math.max(...p99)*1.1; const x=i=>PL+i*(W-PL-PR)/Math.max(1,p50.length-1); const y=v=>PT+(1-v/max)*(H-PT-PB);
-    const pts=a=>a.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)); const rev=a=>a.slice().reverse();
+  function bandChart(p50,p90,p99,labels) {
+    const W=560,H=190,PL=40,PR=8,PT=14,PB=26; const max=Math.max(...p99,1)*1.1; const x=i=>PL+i*(W-PL-PR)/Math.max(1,p50.length-1); const y=v=>PT+(1-v/max)*(H-PT-PB);
+    const pts=a=>a.map((v,i)=>x(i).toFixed(1)+' '+y(v).toFixed(1)); const back=()=>p50.map((v,i)=>({v,i})).reverse().map(o=>x(o.i).toFixed(1)+' '+y(o.v).toFixed(1)).join(' ');
     let s=`<svg viewBox="0 0 ${W} ${H}">`;
     [0,.5,1].map(t=>t*max).forEach(t=>{ s+=`<line x1="${PL}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke="${GRID}"/><text x="${PL-10}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="${FAINT}">${t.toFixed(0)}</text>`; });
-    s+=`<polygon points="${pts(p99).join(' ')} ${rev(p50.map((v,i)=>({v,i}))).map(o=>x(o.i).toFixed(1)+' '+y(o.v).toFixed(1)).join(' ')}" fill="rgba(0,192,107,.10)"/>`;
-    s+=`<polygon points="${pts(p90).join(' ')} ${rev(p50.map((v,i)=>({v,i}))).map(o=>x(o.i).toFixed(1)+' '+y(o.v).toFixed(1)).join(' ')}" fill="rgba(0,192,107,.18)"/>`;
+    s+=`<polygon points="${pts(p99).join(' ')} ${back()}" fill="rgba(0,192,107,.10)"/><polygon points="${pts(p90).join(' ')} ${back()}" fill="rgba(0,192,107,.18)"/>`;
     [[p99,PREV,'p99'],[p90,ACCENT,'p90'],[p50,INK,'p50']].forEach(([a,c,l])=>{ s+=`<polyline points="${pts(a).join(' ')}" fill="none" stroke="${c}" stroke-width="${l==='p90'?2.5:1.8}"/><text x="${x(a.length-1)+6}" y="${y(a[a.length-1])+4}" font-size="11" font-weight="800" fill="${c}">${l} ${a[a.length-1].toFixed(0)}</text>`; });
     labels.forEach((m,i)=>{ if (labels.length>8 && i%2) return; s+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle" font-size="11" fill="${FAINT}">${m}</text>`; });
     return s+'</svg>';
   }
-  function groupedBars(vals, o={}) {  // barras verticales por canal con referencia
-    const W=560,H=190,PL=46,PR=8,PT=16,PB=26,n=vals.length; const max=Math.max(...vals.map(v=>v.v||0), o.ref||0)*1.2; const bw=(W-PL-PR)/n, gap=bw*.38;
+  function groupedBars(vals, o={}) {
+    const W=560,H=190,PL=46,PR=8,PT=16,PB=26,n=vals.length; const max=Math.max(...vals.map(v=>v.v||0), o.ref||0, .1)*1.2; const bw=(W-PL-PR)/n, gap=bw*.38;
     const y=v=>PT+(1-v/max)*(H-PT-PB); let s=`<svg viewBox="0 0 ${W} ${H}">`;
     [0,.5,1].map(t=>t*max).forEach(t=>{ s+=`<line x1="${PL}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke="${GRID}"/><text x="${PL-10}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="${FAINT}">${t.toFixed(1)}%</text>`; });
-    vals.forEach((d,i)=>{ const x0=PL+i*bw+gap/2,w=bw-gap; if (d.v==null){ s+=`<text x="${x0+w/2}" y="${y(0)-8}" text-anchor="middle" font-size="10.5" fill="${FAINT}">no calculable</text>`; } else { s+=`<rect x="${x0}" y="${y(d.v)}" width="${w}" height="${(H-PB)-y(d.v)}" rx="4" fill="${d.v>(o.ref||99)?AMBER:SOFT}" stroke="${d.v>(o.ref||99)?WARN:ACCENT}"/><text x="${x0+w/2}" y="${y(d.v)-6}" text-anchor="middle" font-size="12" font-weight="800" fill="${INK}">${d.v.toFixed(1)}%</text>`; }
+    vals.forEach((d,i)=>{ const x0=PL+i*bw+gap/2,w=bw-gap; if (d.v==null){ s+=`<text x="${x0+w/2}" y="${y(0)-8}" text-anchor="middle" font-size="10.5" fill="${FAINT}">${d.note||'no calculable'}</text>`; } else { s+=`<rect x="${x0}" y="${y(d.v)}" width="${w}" height="${(H-PB)-y(d.v)}" rx="4" fill="${d.v>(o.ref||99)?AMBER:SOFT}" stroke="${d.v>(o.ref||99)?WARN:ACCENT}"/><text x="${x0+w/2}" y="${y(d.v)-6}" text-anchor="middle" font-size="12" font-weight="800" fill="${INK}">${d.v.toFixed(1)}%</text>`; }
       s+=`<text x="${x0+w/2}" y="${H-6}" text-anchor="middle" font-size="11" fill="${FAINT}">${d.k}</text>`; });
     if (o.ref) s+=`<line x1="${PL}" x2="${W-PR}" y1="${y(o.ref)}" y2="${y(o.ref)}" stroke="${INK}" stroke-dasharray="5 4" stroke-width="1.5"/><text x="${W-PR}" y="${y(o.ref)-6}" text-anchor="end" font-size="11" font-weight="700" fill="${INK}">${o.refLabel}</text>`;
     return s+'</svg>';
@@ -152,67 +197,86 @@
   function hbars(vals, ref) {
     const W=560,H=190,PL=76,PR=40,PT=8,PB=8,n=vals.length,rh=(H-PT-PB)/n,gap=rh*.35; const x=v=>PL+(v/100)*(W-PL-PR); let s=`<svg viewBox="0 0 ${W} ${H}">`;
     [0,50,100].forEach(t=>{ s+=`<line x1="${x(t)}" x2="${x(t)}" y1="${PT}" y2="${H-PB}" stroke="${GRID}"/>`; });
-    vals.forEach((d,i)=>{ const y0=PT+i*rh+gap/2,h=rh-gap; s+=`<text x="${PL-10}" y="${y0+h/2+4}" text-anchor="end" font-size="12" font-weight="600" fill="${INK}">${d.k}</text><rect x="${PL}" y="${y0}" width="${x(d.v)-PL}" height="${h}" rx="4" fill="${d.v>ref?AMBER:SOFT}" stroke="${d.v>ref?WARN:ACCENT}"/><text x="${x(d.v)+8}" y="${y0+h/2+4}" font-size="12" font-weight="800" fill="${INK}">${d.v}%</text>`; });
+    vals.forEach((d,i)=>{ const y0=PT+i*rh+gap/2,h=rh-gap; s+=`<text x="${PL-10}" y="${y0+h/2+4}" text-anchor="end" font-size="12" font-weight="600" fill="${INK}">${d.k}</text><rect x="${PL}" y="${y0}" width="${x(d.v)-PL}" height="${h}" rx="4" fill="${d.v>ref?AMBER:SOFT}" stroke="${d.v>ref?WARN:ACCENT}"/><text x="${x(d.v)+8}" y="${y0+h/2+4}" font-size="12" font-weight="800" fill="${INK}">${d.v.toFixed(0)}%</text>`; });
     s+=`<line x1="${x(ref)}" x2="${x(ref)}" y1="${PT}" y2="${H-PB}" stroke="${INK}" stroke-dasharray="5 4" stroke-width="1.5"/><text x="${x(ref)}" y="${H+8}" text-anchor="middle" font-size="11" font-weight="700" fill="${INK}">referencia ${ref}%</text>`;
     return s+'</svg>';
   }
-  function stackedMix(labels) {
-    const bau=win(BASE.mixBau), ad=win(BASE.mixAdhoc); const W=560,H=190,PL=40,PR=8,PT=12,PB=26,n=labels.length,bw=(W-PL-PR)/n,gap=bw*.3; const y=v=>PT+(1-v/100)*(H-PT-PB);
+  function stackedMix(bau, ad, labels) {
+    const W=560,H=190,PL=40,PR=8,PT=12,PB=26,n=labels.length,bw=(W-PL-PR)/n,gap=bw*.3; const y=v=>PT+(1-v/100)*(H-PT-PB);
     let s=`<svg viewBox="0 0 ${W} ${H}">`; [0,50,100].forEach(t=>{ s+=`<line x1="${PL}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke="${GRID}"/><text x="${PL-10}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="${FAINT}">${t}%</text>`; });
-    labels.forEach((m,i)=>{ const x0=PL+i*bw+gap/2,w=bw-gap; let acc=0; const b=Math.round(bau[i]),a=Math.round(ad[i]),l=100-b-a;
+    labels.forEach((m,i)=>{ const x0=PL+i*bw+gap/2,w=bw-gap; let acc=0; const b=Math.round(bau[i]),a=Math.round(ad[i]),l=Math.max(0,100-b-a);
       [[b,ACCENT],[a,AMBER],[l,PREV]].forEach(([v,c])=>{ s+=`<rect x="${x0}" y="${y(acc+v)}" width="${w}" height="${y(acc)-y(acc+v)}" fill="${c}" rx="3"/>`; acc+=v; });
       if (labels.length<=8||i%2===0) s+=`<text x="${x0+w/2}" y="${H-6}" text-anchor="middle" font-size="11" fill="${FAINT}">${m}</text>`;
-      s+=`<text x="${x0+w/2}" y="${y(b)+14}" text-anchor="middle" font-size="10.5" font-weight="800" fill="#fff">${b}%</text>`; });
+      if (b>8) s+=`<text x="${x0+w/2}" y="${y(b)+14}" text-anchor="middle" font-size="10.5" font-weight="800" fill="#fff">${b}%</text>`; });
     s+=`<line x1="${PL}" x2="${W-PR}" y1="${y(60)}" y2="${y(60)}" stroke="${INK}" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W-PR}" y="${y(60)-6}" text-anchor="end" font-size="11" font-weight="700" fill="${INK}">meta 60% BAU</text>`;
     return s+'</svg>';
   }
-  function waterfall() {
-    const steps=[['Mayo',32870,0],['Braze DP',7600,1],['WhatsApp',800,1],['SMS',200,1],['Licencias',0,1],['Junio',41470,0]]; const W=560,H=190,PL=50,PR=8,PT=18,PB=26,n=steps.length,min=30000,max=43000,bw=(W-PL-PR)/n,gap=bw*.3;
-    const y=v=>PT+(1-(v-min)/(max-min))*(H-PT-PB); let s=`<svg viewBox="0 0 ${W} ${H}">`;
-    [30000,35000,40000].forEach(t=>{ s+=`<line x1="${PL}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke="${GRID}"/><text x="${PL-10}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="${FAINT}">$${t/1000}K</text>`; });
-    let run=steps[0][1]; steps.forEach(([k,v,d],i)=>{ const x0=PL+i*bw+gap/2,w=bw-gap; let a,b,c; if(!d){a=min;b=v;c=i?INK:PREV;} else {a=run;b=run+v;run=b;c=AMBER;}
-      const top=Math.min(y(a),y(b)),h=Math.max(2,Math.abs(y(a)-y(b))); s+=`<rect x="${x0}" y="${top}" width="${w}" height="${h}" fill="${c}" rx="3"/><text x="${x0+w/2}" y="${top-6}" text-anchor="middle" font-size="11" font-weight="700" fill="${INK}">${d?(v?'+$'+v.toLocaleString('en-US'):'$0'):'$'+v.toLocaleString('en-US')}</text><text x="${x0+w/2}" y="${H-6}" text-anchor="middle" font-size="11" fill="${FAINT}">${k}</text>`; });
+  function waterfall(prevRows, currRows) {
+    const byCh = ch => rows => sum(rows.filter(r=>ch.includes(r.ch)), r=>r.cost);
+    const start = sum(prevRows,r=>r.cost), end = sum(currRows,r=>r.cost);
+    const steps=[['Anterior',start,0],['Email+Push',byCh(['Email','Push'])(currRows)-byCh(['Email','Push'])(prevRows),1],['WhatsApp',byCh(['WhatsApp'])(currRows)-byCh(['WhatsApp'])(prevRows),1],['SMS',byCh(['SMS'])(currRows)-byCh(['SMS'])(prevRows),1],['In-app',byCh(['In-app'])(currRows)-byCh(['In-app'])(prevRows),1],['Último',end,0]];
+    const W=560,H=190,PL=54,PR=8,PT=18,PB=26,n=steps.length; const lo=Math.min(start,end)*0.85, hi=Math.max(start,end)*1.08||1; const bw=(W-PL-PR)/n,gap=bw*.3;
+    const y=v=>PT+(1-(v-lo)/(hi-lo||1))*(H-PT-PB); let s=`<svg viewBox="0 0 ${W} ${H}">`;
+    [lo,(lo+hi)/2,hi].forEach(t=>{ s+=`<line x1="${PL}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke="${GRID}"/><text x="${PL-10}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="${FAINT}">${usd(t)}</text>`; });
+    let run=start; steps.forEach(([k,v,d],i)=>{ const x0=PL+i*bw+gap/2,w=bw-gap; let a,b,c; if(!d){a=lo;b=v;c=i?INK:PREV;} else {a=run;b=run+v;run=b;c=v>=0?AMBER:SOFT;}
+      const top=Math.min(y(a),y(b)),h=Math.max(2,Math.abs(y(a)-y(b))); s+=`<rect x="${x0}" y="${top}" width="${w}" height="${h}" fill="${c}" rx="3"/><text x="${x0+w/2}" y="${top-6}" text-anchor="middle" font-size="11" font-weight="700" fill="${INK}">${d?(v>=0?'+':'−')+usd(Math.abs(v)):usd(v)}</text><text x="${x0+w/2}" y="${H-6}" text-anchor="middle" font-size="11" fill="${FAINT}">${k}</text>`; });
     return s+'</svg>';
   }
   const panel=(title,sub,body,def,legend='')=>`<div class="panel"><div class="panel-head"><div><h2>${title}</h2><span class="u">${sub}</span></div>${legend}</div>${body}${def?`<div class="def">${def}</div>`:''}</div>`;
   const leg=items=>`<div class="legend">${items.map(([c,l])=>`<span><i style="background:${c}"></i>${l}</span>`).join('')}</div>`;
 
+  // ---------- render ----------
   function render() {
-    const L=LABELS[state.period], k=mult(), rng={year:'últimos 12 meses',month:'últimos 6 meses',week:'últimas 8 semanas'}[state.period];
-    const cov=win(BASE.coverage), ab=win(BASE.abort).map(v=>v*k), bau=win(BASE.mixBau), cost=win(BASE.cost).map(v=>v*Math.max(k,.05)), dps=win(BASE.dpPerSend), p90=win(BASE.p90), p50=win(BASE.p50), p99=win(BASE.p99);
-    const last=a=>a[a.length-1]; const dAb=delta(ab,true), dCov=delta(cov,true), dMix=delta(bau,true), dCost=delta(cost,false), dDps=delta(dps,false);
-    const satVals=CH.map(c=>({k:c,v:Math.round(BASE.satCh[c]*Math.min(1.3,Math.max(.6,k)))}));
-    const satAvg=Math.round(satVals.reduce((p,x)=>p+x.v,0)/satVals.length);
-    const govOut = state.gov==='out';
+    const L=labels(), rng={year:'últimos 12 meses',month:'últimos 6 meses',week:'últimas 8 semanas'}[state.period];
+    const govOut = state.gov==='out', inapp = state.channel==='inapp';
+    const idx = monthsIdx(); const lastMi = idx[idx.length-1], prevMi = idx[idx.length-2];
+    const rowsAll = ROWS.filter(pass), lastRows = rowsAll.filter(r=>r.mi===lastMi), prevRows = rowsAll.filter(r=>r.mi===prevMi);
+    // cobertura: usuarios bajo el modelo ÷ elegibles (ignora el filtro de gobernanza porque lo define)
+    const eligNoGov = ELIG.filter(e=>(state.channel==='todos'||e.ch===CHN[state.channel]) && (state.product==='todos'||e.pr===state.product) && (state.status==='todos'||e.st===state.status));
+    const covSeries = (state.period==='week' ? [prevMi,prevMi,prevMi,prevMi,lastMi,lastMi,lastMi,lastMi] : idx).map(mi=>{ const e=eligNoGov.filter(x=>x.mi===mi); const tot=sum(e,x=>x.eligible), inn=sum(e.filter(x=>x.gov==='in'),x=>x.eligible); return tot?inn/tot*100:0; });
+    const abSeries = series(rate);
+    const bauSeries = series(rows=>{ const b=sum(rows.filter(r=>r.ty==='bau'),r=>r.sends), a=sum(rows.filter(r=>r.ty==='adhoc'),r=>r.sends); return b+a?b/(b+a)*100:0; });
+    const adSeries  = series(rows=>{ const b=sum(rows.filter(r=>r.ty==='bau'),r=>r.sends), a=sum(rows.filter(r=>r.ty==='adhoc'),r=>r.sends); return b+a?a/(b+a)*100:0; });
+    const costSeries = series(rows=>sum(rows,r=>r.cost));
+    const dpsSeries = series(rows=>{ const s=sum(rows,r=>r.sends); return s?sum(rows,r=>r.dp)/s:0; });
+    const eligLast = ELIG.filter(passE).filter(e=>e.mi===lastMi && e.gov==='in');
+    const wavg = (rows,f) => { const t=sum(rows,e=>e.eligible); return t?sum(rows,e=>f(e)*e.eligible)/t:0; };
+    const p50S=seriesE(rows=>wavg(rows,e=>e.p50)), p90S=seriesE(rows=>wavg(rows,e=>e.p90)), p99S=seriesE(rows=>wavg(rows,e=>e.p99));
+    const satByCh = CH.map(ch=>{ const e=eligLast.filter(x=>x.ch===ch); const t=sum(e,x=>x.eligible); return {k:ch, v: t? sum(e,x=>x.hit)/t*100 : 0}; }).filter(d=>state.channel==='todos'||d.k===CHN[state.channel]);
+    const satAvg = (()=>{ const t=sum(eligLast,x=>x.eligible); return t?sum(eligLast,x=>x.hit)/t*100:0; })();
+    const last=a=>a[a.length-1]; const dAb=delta(abSeries,true), dCov=delta(covSeries,true), dMix=delta(bauSeries,true), dCost=delta(costSeries,false), dDps=delta(dpsSeries,true);
+    const abCh = CH.map(ch=> ch==='In-app' ? {k:ch,v:null} : {k:ch, v: rate(lastRows.filter(r=>r.ch===ch))}).filter(d=>state.channel==='todos'||d.k===CHN[state.channel]);
+    const noRows = lastRows.length===0;
     $('cards').innerHTML = [
-      `<div class="card"><span class="l">Cobertura del modelo</span><span class="v">${last(cov).toFixed(0)}%</span><div class="prog"><i style="width:${last(cov)}%"></i></div><div class="d"><span class="pill ${dCov.d>0?'good':'flat'}">${dCov.t}</span><span class="n">meta: 100% en agosto</span></div><span class="def">Usuarios bajo la política ÷ usuarios elegibles.</span></div>`,
-      `<div class="card"><span class="l">Abort rate de gobernanza</span><span class="v">${govOut?'n/a':pct(last(ab))}</span><div class="d"><span class="pill ${govOut?'flat':(dAb.d>0?'bad':'good')}">${govOut?'sin caps':dAb.t}</span><span class="n">banda objetivo 4 a 6%</span></div><span class="def">Aborts ÷ (sends + aborts), estados finales excluyentes.</span></div>`,
-      `<div class="card"><span class="l">Saturación de caps</span><span class="v">${govOut?'n/a':satAvg+'%'}</span><div class="d"><span class="pill flat">promedio de canales</span></div><span class="def">Usuarios en o sobre su cap ÷ elegibles con seguimiento completo.</span></div>`,
-      `<div class="card"><span class="l">Presión de comunicación</span><span class="v">${last(p50)} <span style="font-size:14px;font-weight:600;color:var(--muted)">· ${last(p90)} · ${last(p99)}</span></span><div class="d"><span class="pill flat">p50 · p90 · p99</span></div><span class="def">Mensajes por usuario elegible en el periodo, incluidos ceros.</span></div>`,
-      `<div class="card"><span class="l">Mix BAU / Ad-hoc</span><span class="v">${Math.round(last(bau))}%</span><div class="d"><span class="pill ${dMix.d<0?'bad':'good'}">${dMix.t}</span><span class="n">meta 60% BAU</span></div><span class="def">Sends BAU ÷ (BAU + Ad-hoc). Lifecycle aparte.</span></div>`,
-      `<div class="card"><span class="l">Costo y eficiencia de DP</span><span class="v">${usd(last(cost))}</span><div class="d"><span class="pill ${dCost.d>0?'bad':'good'}">${dCost.t}</span><span class="n">DP por envío ${last(dps).toFixed(2)} (${dDps.t})</span></div><span class="def">Costo total variable; DP ÷ envíos como razón de eficiencia.</span></div>`,
+      `<div class="card"><span class="l">Cobertura del modelo</span><span class="v">${last(covSeries).toFixed(0)}%</span><div class="prog"><i style="width:${last(covSeries)}%"></i></div><div class="d"><span class="pill ${dCov.d>0?'good':'flat'}">${dCov.t}</span><span class="n">meta: 100% en agosto</span></div><span class="def">Usuarios bajo la política ÷ usuarios elegibles.</span></div>`,
+      `<div class="card"><span class="l">Abort rate de gobernanza</span><span class="v">${govOut||inapp||noRows?'n/a':pct(last(abSeries))}</span><div class="d"><span class="pill ${govOut||inapp||noRows?'flat':(dAb.d>0?'bad':'good')}">${govOut?'sin caps':inapp?'no calculable en In-app':noRows?'sin datos':dAb.t}</span><span class="n">banda objetivo 4 a 6%</span></div><span class="def">Aborts ÷ (sends + aborts), estados finales excluyentes. In-app excluido.</span></div>`,
+      `<div class="card"><span class="l">Saturación de caps</span><span class="v">${govOut?'n/a':satAvg.toFixed(0)+'%'}</span><div class="d"><span class="pill flat">${govOut?'sin caps':'sobre elegibles'}</span></div><span class="def">Usuarios en o sobre su cap ÷ elegibles con seguimiento completo.</span></div>`,
+      `<div class="card"><span class="l">Presión de comunicación</span><span class="v">${last(p50S).toFixed(0)} <span style="font-size:14px;font-weight:600;color:var(--muted)">· ${last(p90S).toFixed(0)} · ${last(p99S).toFixed(0)}</span></span><div class="d"><span class="pill flat">p50 · p90 · p99</span></div><span class="def">Mensajes por usuario elegible en el periodo, incluidos ceros.</span></div>`,
+      `<div class="card"><span class="l">Mix BAU / Ad-hoc</span><span class="v">${noRows?'n/a':Math.round(last(bauSeries))+'%'}</span><div class="d"><span class="pill ${dMix.d<0?'bad':'good'}">${noRows?'sin datos':dMix.t}</span><span class="n">meta 60% BAU</span></div><span class="def">Sends BAU ÷ (BAU + Ad-hoc). Lifecycle aparte.</span></div>`,
+      `<div class="card"><span class="l">Costo y eficiencia de DP</span><span class="v">${usd(last(costSeries))}</span><div class="d"><span class="pill ${dCost.d>0?'bad':'good'}">${dCost.t}</span><span class="n">DP por envío ${last(dpsSeries).toFixed(2)} (${dDps.t})</span></div><span class="def">Costo variable de las filas filtradas; DP ÷ envíos como razón de eficiencia.</span></div>`,
       `<div class="card pending"><span class="l">Efecto del modelo de gobernanza</span><span class="v">Sin experimento</span><div class="d"><span class="pill flat">requiere asignación</span></div><span class="def">Tasa de conversión bajo la política menos bajo la anterior, por usuario elegible asignado.</span></div>`,
     ].join('');
-    const abCh=CH.map(c=>({k:c, v: BASE.abortCh[c]==null||govOut ? null : BASE.abortCh[c]*Math.min(1.4,Math.max(.7,k))}));
     $('panels').innerHTML = `
       <div class="grid2">
-        ${panel('Cobertura del modelo','Tendencia · '+rng, lineChart(cov,L,{fmt:v=>v.toFixed(0)+'%',tick:t=>t.toFixed(0)+'%',fill:true}), 'La expansión al 100% está programada para agosto; la línea debe saltar ahí.')}
-        ${panel('Abort rate de gobernanza','Línea mensual con banda objetivo · '+rng, govOut?`<div class="pend">Fuera del modelo no hay caps: el abort rate no aplica.</div>`:lineChart(ab,L,{fmt:pct,tick:t=>t.toFixed(1)+'%',band:[4,6]}), 'Aborts ÷ (sends + aborts). Solo razones de cap; el canal se infiere desde dim_canvas.', leg([['rgba(0,192,107,.35)','banda objetivo 4 a 6%']]))}
+        ${panel('Cobertura del modelo','Tendencia · '+rng, lineChart(covSeries,L,{fmt:v=>v.toFixed(0)+'%',tick:t=>t.toFixed(0)+'%',fill:true}), 'La expansión al 100% está programada para agosto; la línea debe saltar ahí.')}
+        ${panel('Abort rate de gobernanza','Línea con banda objetivo · '+rng, govOut?`<div class="pend">Fuera del modelo no hay caps: el abort rate no aplica.</div>`:inapp?`<div class="pend">In-app registra impresiones, no intentos de envío: el abort rate no se calcula.</div>`:noRows?`<div class="pend">Sin filas para esta combinación de filtros.</div>`:lineChart(abSeries,L,{fmt:pct,tick:t=>t.toFixed(1)+'%',band:[4,6]}), 'Aborts ÷ (sends + aborts) sobre las filas filtradas. Solo razones de cap.', leg([['rgba(0,192,107,.35)','banda objetivo 4 a 6%']]))}
       </div>
       <div class="grid2">
-        ${panel('Abort rate por canal','Barras agrupadas, último periodo · las tasas no se apilan', groupedBars(abCh,{ref:6,refLabel:'objetivo máx. 6%'}), 'In-app no se calcula: una impresión no es un intento de envío.')}
-        ${panel('Saturación de caps por canal','Barras horizontales con referencia · último periodo', govOut?`<div class="pend">Fuera del modelo no hay caps.</div>`:hbars(satVals,60), 'Cada canal con su propio numerador y denominador. WhatsApp y SMS tienen el cap más restrictivo (0.5 al mes).')}
+        ${panel('Abort rate por canal','Barras agrupadas, último periodo · las tasas no se apilan', govOut?`<div class="pend">Fuera del modelo no hay caps.</div>`:groupedBars(abCh,{ref:6,refLabel:'objetivo máx. 6%'}), 'In-app no se calcula: una impresión no es un intento de envío.')}
+        ${panel('Saturación de caps por canal','Barras horizontales con referencia · último periodo', govOut?`<div class="pend">Fuera del modelo no hay caps.</div>`:hbars(satByCh,60), 'Cada canal con su propio numerador y denominador. WhatsApp y SMS tienen el cap más restrictivo (0.5 al mes).')}
       </div>
       <div class="grid2">
-        ${panel('Presión de comunicación','Bandas de percentiles en el tiempo · '+rng, bandChart(L), 'El promedio oculta la cola; p99 es la exposición máxima que recibe el 1% más contactado.', leg([[INK,'p50'],[ACCENT,'p90'],[PREV,'p99']]))}
-        ${panel('Mix BAU / Ad-hoc','Apilado al 100% con meta · '+rng, stackedMix(L), 'Por volumen de comunicaciones. Lifecycle aparte porque la meta no lo contempla.', leg([[ACCENT,'BAU'],[AMBER,'Ad-hoc'],[PREV,'Lifecycle']]))}
+        ${panel('Presión de comunicación','Bandas de percentiles en el tiempo · '+rng, bandChart(p50S,p90S,p99S,L), 'El promedio oculta la cola; p99 es la exposición máxima que recibe el 1% más contactado.', leg([[INK,'p50'],[ACCENT,'p90'],[PREV,'p99']]))}
+        ${panel('Mix BAU / Ad-hoc','Apilado al 100% con meta · '+rng, noRows?`<div class="pend">Sin filas para esta combinación de filtros.</div>`:stackedMix(bauSeries,adSeries,L), 'Por volumen de comunicaciones. Lifecycle aparte porque la meta no lo contempla.', leg([[ACCENT,'BAU'],[AMBER,'Ad-hoc'],[PREV,'Lifecycle']]))}
       </div>
       <div class="grid2">
-        ${panel('Costo y eficiencia de DP','Waterfall del cambio, mayo a junio (USD)', waterfall(), 'Braze Data Points explican casi todo el aumento con envíos +4%: la eficiencia (DP por envío) es la señal, no el total.')}
+        ${panel('Costo y eficiencia de DP','Waterfall del cambio, penúltimo a último periodo (USD)', noRows?`<div class="pend">Sin filas para esta combinación de filtros.</div>`:waterfall(prevRows,lastRows), 'El cambio se descompone por canal sobre las filas filtradas. La señal es DP por envío, no el total.')}
         ${panel('Efecto del modelo de gobernanza','Tratamiento vs control con intervalo de confianza 95%', `<div class="pend">Puntos comparativos: conversión bajo la política nueva vs bajo la anterior, por usuario elegible asignado, con intervalo de confianza.<br><br>Sin datos: no existe la tabla de asignación ni el experimento.</div>`, 'Solo se muestra cuando exista un experimento válido. Un holdout sin comunicaciones mide otra cosa: la incrementalidad total del CRM.')}
       </div>`;
-    const rows=CANVASES.map(r=>({...r, rate: r.ab/(r.s+r.ab)*100})).sort((a,b)=> state.sort==='aborts' ? b.ab-a.ab : b.rate-a.rate);
-    $('rows').innerHTML = rows.map(r=>`<tr><td>${esc(r.c)}</td><td>${r.a}</td><td>${r.ch}</td><td>${r.s.toLocaleString('en-US')}</td><td>${r.ab.toLocaleString('en-US')}</td><td style="font-weight:700">${r.rate.toFixed(2)}%</td><td>${r.u.toLocaleString('en-US')}</td><td>${r.cv.toLocaleString('en-US')}</td><td>${r.s<5000?'<span class="tag">bajo volumen</span>':'ok'}</td></tr>`).join('');
+    // tabla de canvases: agregada desde las filas filtradas del último periodo
+    const byC = {}; lastRows.forEach(r=>{ const k=r.ci; byC[k] = byC[k] || {c:r.c,a:r.a,ch:r.ch,ty:r.ty,s:0,ab:0,u:0,cv:0}; byC[k].s+=r.sends; byC[k].ab+=r.aborts; byC[k].cv+=r.conv; });
+    const rows = Object.values(byC).map(r=>({...r, u:Math.round(r.ab*0.92), rate: r.ch==='In-app'?null:(r.s+r.ab? r.ab/(r.s+r.ab)*100:0)})).sort((a,b)=> state.sort==='aborts' ? b.ab-a.ab : (b.rate||0)-(a.rate||0)).slice(0,10);
+    $('rows').innerHTML = rows.length ? rows.map(r=>`<tr><td>${esc(r.c)}</td><td>${r.a}</td><td>${r.ch}</td><td>${r.s.toLocaleString('en-US')}</td><td>${r.ab.toLocaleString('en-US')}</td><td style="font-weight:700">${r.rate==null?'n/a':r.rate.toFixed(2)+'%'}</td><td>${r.u.toLocaleString('en-US')}</td><td>${r.cv.toLocaleString('en-US')}</td><td>${r.s<5000?'<span class="tag">bajo volumen</span>':'ok'}</td></tr>`).join('') : `<tr><td colspan="9" style="text-align:center;color:var(--faint)">Sin canvases para esta combinación de filtros.</td></tr>`;
     const areaName={todas:'todas las áreas',crm:'CRM',pm:'Product Marketing',brand:'Brand'}[state.area];
     $('title').textContent='Cómo va el modelo de gobernanza · '+areaName;
   }
