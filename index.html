@@ -8,367 +8,230 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --accent: #00C06B; --accent-deep: #0B7A4B; --accent-soft: #EAF7F0; --accent-glow: #4BE39C;
-    --ink: #06231D; --muted: #5E6B66; --faint: #8A968F; --line: #E2E7E2; --line-soft: #EDF1EE;
-    --bg: #F4F6F4; --bad: #B23A22; --bad-soft: #FDEDEA; --warn: #B7791F;
-    --dark-text: #C9DCD2; --dark-note: #7E9A8D;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font-family: Manrope, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-  .page { min-height: 100vh; padding: 28px clamp(20px, 4vw, 56px) 64px; }
-  .wrap { max-width: 1320px; margin: 0 auto; }
-
-  header { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; justify-content: space-between; margin-bottom: 26px; }
-  .brand { display: flex; align-items: center; gap: 12px; }
-  .brand i { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); display: inline-block; }
-  .brand span { font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
-  h1 { margin: 8px 0 0; font-size: clamp(28px, 3.2vw, 40px); font-weight: 800; letter-spacing: -0.025em; line-height: 1.1; }
-  .claim { margin: 8px 0 0; font-size: 15px; line-height: 1.5; color: var(--muted); max-width: 62ch; }
-  .period { display: flex; flex-direction: column; gap: 6px; }
-  .period > span { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
-  .seg { display: flex; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 5px; }
-  .seg button { padding: 8px 15px; border: none; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; background: transparent; color: var(--muted); }
-  .seg button.on { background: var(--accent-soft); color: var(--accent-deep); }
-
-  .chips { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 22px; }
-  .chip { padding: 9px 18px; border-radius: 999px; font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; border: 1px solid #DDE3DE; background: #fff; color: #3C4A44; transition: border-color .15s; }
-  .chip:hover { border-color: var(--accent); }
-  .chip.on { background: var(--ink); border-color: var(--ink); color: #fff; }
-  .chips .note { margin-left: auto; font-size: 12.5px; color: var(--faint); }
-
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin-bottom: 20px; }
-  .card { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 22px 24px 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-  .card .l { font-size: 13px; font-weight: 600; color: var(--muted); }
-  .card .v { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
-  .card .d { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .pill { font-size: 13px; font-weight: 800; padding: 3px 9px; border-radius: 7px; }
-  .pill.good { background: var(--accent-soft); color: var(--accent-deep); }
-  .pill.bad { background: var(--bad-soft); color: var(--bad); }
-  .pill.flat { background: #EEF1EF; color: var(--muted); }
-  .card .n { font-size: 12.5px; color: var(--faint); }
-  .card .def { font-size: 12px; color: var(--faint); line-height: 1.45; padding-top: 10px; border-top: 1px solid var(--line-soft); }
-
-  .row2 { display: grid; grid-template-columns: minmax(0, 2.05fr) minmax(0, 1fr); gap: 20px; align-items: start; margin-bottom: 20px; }
-  .row3 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-  .panel { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 26px 28px 20px; min-width: 0; }
-  .panel-head { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: baseline; margin-bottom: 22px; }
-  .panel h2 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
-  .panel .u { font-size: 13px; color: var(--faint); display: block; margin-top: 4px; }
-  .legend { display: flex; gap: 18px; flex-wrap: wrap; }
-  .legend span { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); }
-  .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
-  .panel .def { font-size: 12px; color: var(--faint); line-height: 1.45; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
-  svg { width: 100%; height: auto; display: block; overflow: visible; }
-  svg text { font-family: Manrope, sans-serif; }
-
-  .dark { background: var(--ink); border-radius: 18px; padding: 26px 28px; color: #EAF3EE; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-  .dark h2 { margin: 0; font-size: 17px; font-weight: 700; color: #fff; }
-  .ins { display: flex; flex-direction: column; gap: 6px; padding-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.12); }
-  .ins b { font-size: 26px; font-weight: 800; color: var(--accent-glow); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-  .ins span { font-size: 13.5px; line-height: 1.5; color: var(--dark-text); }
-  .dark .foot { font-size: 12px; color: var(--dark-note); line-height: 1.5; }
-
-  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; min-width: 760px; }
-  th { text-align: right; padding: 0 16px 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
-  th:first-child { text-align: left; padding-left: 0; } th:last-child { text-align: left; padding-right: 0; padding-left: 16px; }
-  td { padding: 16px; font-size: 14.5px; text-align: right; border-top: 1px solid var(--line-soft); }
-  td:first-child { text-align: left; padding-left: 0; font-weight: 700; } td:last-child { padding-right: 0; padding-left: 16px; width: 210px; }
-  .bar { height: 8px; border-radius: 999px; background: var(--line-soft); overflow: hidden; }
-  .bar i { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
-  .bar i.warn { background: var(--warn); }
-  .tscroll { overflow-x: auto; }
-
-  .pending { border: 1px dashed #C6D2CB; background: #FBFCFB; }
-  .pending .box { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .pending ul { margin: 8px 0 0 18px; padding: 0; font-size: 13.5px; line-height: 1.55; color: var(--muted); }
-  .pending .empty { display: flex; align-items: center; justify-content: center; min-height: 150px; border: 1px dashed var(--line); border-radius: 12px; color: var(--faint); font-size: 13px; text-align: center; padding: 16px; }
-  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; background: var(--line-soft); padding: 1px 5px; border-radius: 4px; }
-
-  footer { margin-top: 24px; font-size: 12px; color: var(--faint); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; line-height: 1.5; }
-  @media (max-width: 980px) { .row2, .row3, .pending .box { grid-template-columns: 1fr; } }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  :root { --accent:#00C06B; --accent-deep:#0B7A4B; --accent-soft:#EAF7F0; --accent-glow:#4BE39C; --ink:#06231D; --muted:#5E6B66; --faint:#8A968F; --line:#E2E7E2; --line-soft:#EDF1EE; --bg:#F4F6F4; --bad:#B23A22; --bad-soft:#FDEDEA; --warn:#B7791F; --amber:#F2B84B; --dark-text:#C9DCD2; --dark-note:#7E9A8D; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:Manrope,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; }
+  .page { padding:28px clamp(20px,4vw,56px) 64px; } .wrap { max-width:1320px; margin:0 auto; }
+  header { display:flex; flex-wrap:wrap; gap:20px; align-items:flex-end; justify-content:space-between; margin-bottom:22px; }
+  .brand { display:flex; align-items:center; gap:12px; } .brand i { width:26px; height:26px; border-radius:7px; background:var(--accent); display:inline-block; }
+  .brand span { font-size:13px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  h1 { margin:8px 0 0; font-size:clamp(28px,3.2vw,40px); font-weight:800; letter-spacing:-.025em; line-height:1.1; }
+  .claim { margin:8px 0 0; font-size:15px; line-height:1.5; color:var(--muted); max-width:62ch; }
+  .note { font-size:12.5px; font-weight:700; color:var(--bad); }
+  .filters { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; background:#fff; border:1px solid var(--line); border-radius:18px; padding:16px 18px; margin-bottom:20px; }
+  .f label { display:block; font-size:11.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); margin-bottom:8px; }
+  .f select { width:100%; font:inherit; font-size:14px; font-weight:600; color:var(--ink); padding:10px 38px 10px 12px; border:1px solid #DDE3DE; border-radius:12px; background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2306231D' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 14px center; appearance:none; -webkit-appearance:none; cursor:pointer; }
+  .f select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,192,107,.15); }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; margin-bottom:20px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:18px; padding:22px 24px 20px; display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .card .l { font-size:13px; font-weight:600; color:var(--muted); } .card .v { font-size:32px; font-weight:800; letter-spacing:-.03em; line-height:1; font-variant-numeric:tabular-nums; }
+  .card .d { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .pill { font-size:13px; font-weight:800; padding:3px 9px; border-radius:7px; } .pill.good { background:var(--accent-soft); color:var(--accent-deep); } .pill.bad { background:var(--bad-soft); color:var(--bad); } .pill.flat { background:#EEF1EF; color:var(--muted); }
+  .card .n { font-size:12.5px; color:var(--faint); } .card .def { font-size:12px; color:var(--faint); line-height:1.45; padding-top:10px; border-top:1px solid var(--line-soft); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; }
+  .row2 { display:grid; grid-template-columns:minmax(0,2.05fr) minmax(0,1fr); gap:20px; align-items:start; margin-bottom:20px; }
+  .panel { background:#fff; border:1px solid var(--line); border-radius:18px; padding:24px 26px 18px; min-width:0; }
+  .panel-head { display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; align-items:baseline; margin-bottom:16px; }
+  .panel h2 { margin:0; font-size:16px; font-weight:700; letter-spacing:-.01em; } .panel .u { font-size:12.5px; color:var(--faint); display:block; margin-top:4px; }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; } .legend span { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); } .legend i { width:10px; height:10px; border-radius:3px; display:inline-block; }
+  .panel .def { font-size:12px; color:var(--faint); line-height:1.45; margin-top:12px; padding-top:10px; border-top:1px solid var(--line-soft); }
+  svg { width:100%; height:auto; display:block; overflow:visible; } svg text { font-family:Manrope,sans-serif; }
+  .dark { background:var(--ink); border-radius:18px; padding:26px 28px; color:#EAF3EE; display:flex; flex-direction:column; gap:20px; min-width:0; }
+  .dark h2 { margin:0; font-size:17px; font-weight:700; color:#fff; } .ins { display:flex; flex-direction:column; gap:6px; padding-bottom:18px; border-bottom:1px solid rgba(255,255,255,.12); }
+  .ins b { font-size:26px; font-weight:800; color:var(--accent-glow); letter-spacing:-.02em; } .ins span { font-size:13.5px; line-height:1.5; color:var(--dark-text); } .dark .foot { font-size:12px; color:var(--dark-note); line-height:1.5; }
+  table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; min-width:760px; }
+  th { text-align:right; padding:0 16px 12px; font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--faint); } th:first-child { text-align:left; padding-left:0; } th:last-child { text-align:left; padding-right:0; padding-left:16px; }
+  td { padding:16px; font-size:14.5px; text-align:right; border-top:1px solid var(--line-soft); } td:first-child { text-align:left; padding-left:0; font-weight:700; } td:last-child { padding-right:0; padding-left:16px; width:210px; }
+  .bar { height:8px; border-radius:999px; background:var(--line-soft); overflow:hidden; } .bar i { display:block; height:100%; border-radius:999px; background:var(--accent); } .bar i.warn { background:var(--warn); }
+  .tscroll { overflow-x:auto; }
+  footer { margin-top:24px; font-size:12px; color:var(--faint); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; line-height:1.5; }
+  @media (max-width:980px) { .row2,.grid2 { grid-template-columns:1fr; } }
 </style>
 </head>
-<body>
-<div class="page"><div class="wrap">
+<body><div class="page"><div class="wrap">
 
-  <header>
-    <div>
-      <div class="brand"><i></i><span>Gobernanza CRM · Revisión mensual</span></div>
-      <h1 id="title">Cómo va el modelo de gobernanza en junio</h1>
-      <p class="claim">Piloto al 10% del universo, 2.1 millones de usuarios activos y alrededor de 120 canvases al mes. Qué se envía, qué se bloquea, a quién, y cuánto cuesta.</p>
-    </div>
-    <div class="period">
-      <span>Serie histórica en gráficas</span>
-      <div class="seg" id="periodSeg">
-        <button data-n="3" type="button">3 meses</button>
-        <button data-n="6" class="on" type="button">6 meses</button>
-      </div>
-    </div>
-  </header>
-
-  <div class="chips" id="areaChips">
-    <button class="chip on" data-area="todas" type="button">Todas las áreas</button>
-    <button class="chip" data-area="crm" type="button">CRM</button>
-    <button class="chip" data-area="pm" type="button">Product Marketing</button>
-    <button class="chip" data-area="brand" type="button">Brand</button>
-    <span class="note" style="color:#B23A22;font-weight:700">Datos sintéticos, solo demostración</span>
+<header>
+  <div>
+    <div class="brand"><i></i><span>Gobernanza CRM · Revisión mensual</span></div>
+    <h1 id="title">Cómo va el modelo de gobernanza</h1>
+    <p class="claim">Piloto al 10% del universo, 2.1 millones de usuarios activos y alrededor de 120 canvases al mes. Qué se envía, qué se bloquea, a quién, y cuánto cuesta.</p>
   </div>
+  <div class="note">Datos sintéticos, solo demostración</div>
+</header>
 
-  <section class="cards" id="cards"></section>
+<section class="filters">
+  <div class="f"><label for="fPeriod">Ventana de tiempo</label>
+    <select id="fPeriod"><option value="year">Año (últimos 12 meses)</option><option value="month" selected>Mes (últimos 6 meses)</option><option value="week">Semana (últimas 8 semanas)</option></select></div>
+  <div class="f"><label for="fArea">Área</label>
+    <select id="fArea"><option value="todas">Todas las áreas</option><option value="crm">CRM</option><option value="pm">Product Marketing</option><option value="brand">Brand</option></select></div>
+  <div class="f"><label for="fChannel">Canal</label>
+    <select id="fChannel"><option value="todos">Todos los canales</option><option value="email">Email</option><option value="push">Push</option><option value="whatsapp">WhatsApp</option><option value="sms">SMS</option><option value="inapp">In-app</option></select></div>
+  <div class="f"><label for="fMix">Mix (tipo de canvas)</label>
+    <select id="fMix"><option value="todos">Todos los tipos</option><option value="bau">BAU</option><option value="adhoc">Ad-hoc</option><option value="lifecycle">Lifecycle</option></select></div>
+</section>
 
-  <section class="row2">
-    <div class="panel">
-      <div class="panel-head">
-        <div><h2>Presión sobre el cap y mensajes bloqueados</h2><span class="u" id="mainRange">Porcentaje mensual, usuarios CREDIT en el piloto</span></div>
-        <div class="legend">
-          <span><i style="background:var(--accent)"></i>Abort rate en el piloto</span>
-          <span><i style="background:#C6D2CB"></i>Usuarios por encima del cap de email</span>
-        </div>
-      </div>
-      <div id="mainChart"></div>
-      <div class="def">Abort rate = aborts ÷ (envíos + aborts), solo razones de cap. Usuarios por encima del cap = % de usuarios CREDIT con más de 5 emails en el mes. Cuando la segunda sube, la primera la sigue: el modelo está frenando lo que el targeting sigue intentando.</div>
-    </div>
-    <div class="dark">
-      <h2>Lectura del periodo</h2>
-      <div id="insights"></div>
-      <span class="foot">Todas las cifras de este tablero son sintéticas, construidas para el caso a partir de los datos del enunciado (480K usuarios CREDIT, 2.35M emails y 41,200 aborts en mayo, tabla de costos H1). No provienen de datos internos de Stori.</span>
-    </div>
-  </section>
+<section class="cards" id="cards"></section>
 
-  <section class="row3">
-    <div class="panel">
-      <div class="panel-head">
-        <div><h2>Mix de campañas por volumen de envíos</h2><span class="u" id="mixRange">Meta del modelo: 60% BAU / 40% ad-hoc</span></div>
-        <div class="legend">
-          <span><i style="background:var(--accent)"></i>BAU</span>
-          <span><i style="background:#F2B84B"></i>Ad-hoc</span>
-          <span><i style="background:#C6D2CB"></i>Lifecycle</span>
-        </div>
-      </div>
-      <div id="mixChart"></div>
-      <div class="def">Medido por volumen de envíos, no por conteo de canvases. Lifecycle se muestra aparte porque la meta 60/40 no lo contempla; según cómo se clasifique, el 14% de junio puede cambiar. Es lo primero a validar en la Tarea 2C.</div>
-    </div>
-    <div class="panel">
-      <div class="panel-head">
-        <div><h2>De dónde vino el aumento de costo</h2><span class="u">USD, mayo a junio</span></div>
-      </div>
-      <div id="waterChart"></div>
-      <div class="def">Braze Data Points explican casi todo el aumento: +$7,600 con envíos +4%. Es la anomalía de la Situación 1C y la razón por la que la única palanca con masa en el Módulo 4 es el consumo de DP.</div>
-    </div>
-  </section>
+<section class="grid2" id="history"></section>
 
-  <section class="panel" style="margin-bottom:20px">
-    <div class="panel-head">
-      <h2>Detalle por canal · junio</h2>
-      <div class="legend"><span><i style="background:var(--accent)"></i>Click rate sobre entregados</span><span><i style="background:var(--warn)"></i>Canal saturado</span></div>
-    </div>
-    <div class="tscroll"><table>
-      <thead><tr><th>Canal</th><th>Envíos</th><th>Bloqueados</th><th>Abort rate</th><th>Saturación cap</th><th>Cap mensual</th><th>Click rate</th></tr></thead>
-      <tbody id="rows"></tbody>
-    </table></div>
-    <div class="def">Saturación = % de usuarios del piloto que alcanzó el cap del canal. WhatsApp y SMS son los canales más bloqueados porque su cap es 0.5 al mes; la pregunta no es subir el cap sino reservarlos para casos de uso con retorno comprobado.</div>
-  </section>
+<section class="row2">
+  <div class="panel">
+    <div class="panel-head"><div><h2>Mix de campañas por volumen de comunicaciones</h2><span class="u" id="mixRange">Meta del modelo: 60% BAU / 40% ad-hoc</span></div>
+      <div class="legend"><span><i style="background:var(--accent)"></i>BAU</span><span><i style="background:var(--amber)"></i>Ad-hoc</span><span><i style="background:#C6D2CB"></i>Lifecycle</span></div></div>
+    <div id="mixChart"></div>
+    <div class="def">Medido por comunicaciones, no por conteo de canvases. Lifecycle se muestra aparte porque la meta 60/40 no lo contempla.</div>
+  </div>
+  <div class="dark"><h2>Lectura del periodo</h2><div id="insights"></div>
+    <span class="foot">Todas las cifras son sintéticas, construidas para el caso a partir de los datos del enunciado. No provienen de datos internos de Stori.</span></div>
+</section>
 
-  <section class="panel pending">
-    <div class="panel-head" style="margin-bottom:8px"><div><h2>Conversión incremental</h2><span class="u">Pendiente: requiere holdout global</span></div></div>
-    <div class="box">
-      <div>
-        <p style="margin:0;font-size:14px;line-height:1.55;color:var(--muted)">Es la única métrica que dice si el CRM genera valor o lo cosecha. Hoy nada en el esquema permite medir causalidad, así que esta tarjeta queda vacía a propósito hasta que exista el dato.</p>
-        <ul>
-          <li>Holdout global del 5% de la base, asignación estable por hash de <code>user_id</code>.</li>
-          <li>Excluido de todo marketing; nunca de transaccionales, regulatorias ni cobranza.</li>
-          <li>Columna <code>holdout_group</code> en <code>dim_user</code> y en la tabla de hechos diaria.</li>
-          <li>Lectura mensual: el 5% no tiene potencia estadística en ventanas cortas.</li>
-        </ul>
-      </div>
-      <div class="empty">Barras pareadas tratado vs holdout con intervalo de confianza al 95%, por área.<br><br>Sin datos: el holdout no existe todavía.</div>
-    </div>
-  </section>
+<section class="panel" style="margin-bottom:20px">
+  <div class="panel-head"><h2>Detalle por canal · último periodo</h2>
+    <div class="legend"><span><i style="background:var(--accent)"></i>Click rate sobre entregados</span><span><i style="background:var(--warn)"></i>Canal saturado</span></div></div>
+  <div class="tscroll"><table><thead><tr><th>Canal</th><th>Envíos</th><th>Bloqueados</th><th>Abort rate</th><th>Saturación cap</th><th>Cap mensual</th><th>Click rate</th></tr></thead><tbody id="rows"></tbody></table></div>
+  <div class="def">Saturación = % de usuarios del piloto que alcanzó el cap del canal. In-app son impresiones, no envíos: su abort rate no se calcula.</div>
+</section>
 
-  <footer>
-    <span>Fuente: crm_analytics.agg_canvas_monthly y crm_analytics.fct_user_month · Último refresh: 03 jul 2026 06:12 CST · Cifras definitivas a D+7</span>
-    <span>Cada tarjeta muestra su definición al pie. Las discusiones de una revisión mensual suelen ser sobre definiciones, no sobre resultados.</span>
-  </footer>
-
+<footer><span>Fuente: crm_analytics.agg_canvas_monthly y crm_analytics.fct_user_month · Último refresh: 03 jul 2026 06:12 CST</span><span>Cada tarjeta muestra su definición al pie.</span></footer>
 </div></div>
 
 <script>
 (function () {
-  const ACCENT = '#00C06B', PREV = '#C6D2CB', AMBER = '#F2B84B', INK = '#06231D', GRID = '#EDF1EE', FAINT = '#8A968F';
-  const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
-
-  const DATA = {
-    todas: {
-      title: 'Cómo va el modelo de gobernanza en junio',
-      kpis: [
-        { l: 'Usuarios contactados', v: '1.81M', d: '+3.4%', good: true, n: '86% de la base activa', def: 'Usuarios únicos con al menos un envío en el mes, cualquier canal.' },
-        { l: 'Conversiones atribuidas', v: '52.4K', d: '+18%', good: true, n: '2.9% sobre contactados', def: 'A 7 días de un envío. Sin holdout no es incremental.' },
-        { l: 'Mensajes por usuario', v: '7', d: 'p99 · 21', flat: true, n: 'p50 · p90 13', def: 'Percentiles, no promedio. El promedio oculta la cola sobre-impactada.' },
-        { l: 'Abort rate en el piloto', v: '6.4%', d: '+0.4 pp', good: false, n: '43,900 bloqueados', def: 'aborts ÷ (envíos + aborts) en el 10% gobernado. Solo razones de cap.' },
-        { l: 'Click rate sobre entregados', v: '2.8%', d: '+0.2 pp', good: true, n: 'CTOR 12.4%', def: 'Clics únicos ÷ entregados. No usa aperturas por Apple MPP.' },
-        { l: 'Costo por conversión', v: '$0.79', d: '+7%', good: false, n: 'costo total $41,470', def: 'Costo variable ÷ conversiones. El costo subió 26%; las conversiones, 18%.' },
-      ],
-      abort: [4.6, 4.8, 5.1, 5.5, 6.0, 6.4], over: [26, 27, 29, 31, 34, 37],
-      insights: [
-        { s: '37%', t: 'De los usuarios CREDIT recibe más emails que el cap de 5 al mes. El promedio de 4.9 no lo deja ver.' },
-        { s: '1.8M', t: 'Mensajes al mes que se bloquearían al expandir la gobernanza al 100%, extrapolando los 41,200 aborts del piloto.' },
-        { s: '+18%', t: 'Conversiones frente a mayo, con el costo por conversión subiendo solo 7%. El negocio crece; el modelo es lo que hay que afinar.' },
-      ],
-    },
-    crm: {
-      title: 'Gobernanza en las campañas de CRM',
-      kpis: [
-        { l: 'Usuarios contactados', v: '1.62M', d: '+2.1%', good: true, n: '77% de la base', def: 'Usuarios únicos con al menos un envío de CRM.' },
-        { l: 'Conversiones atribuidas', v: '38.1K', d: '+14%', good: true, n: '2.4% sobre contactados', def: 'A 7 días de un envío de CRM.' },
-        { l: 'Mensajes por usuario', v: '5', d: 'p99 · 15', flat: true, n: 'p50 · p90 9', def: 'Percentiles sobre envíos de CRM.' },
-        { l: 'Abort rate en el piloto', v: '5.1%', d: '+0.2 pp', good: false, n: '24,600 bloqueados', def: 'Solo razones de cap.' },
-        { l: 'Click rate sobre entregados', v: '3.1%', d: '+0.3 pp', good: true, n: 'CTOR 13.6%', def: 'Clics únicos ÷ entregados.' },
-        { l: 'Costo por conversión', v: '$0.61', d: '+3%', good: false, n: 'costo $23,200', def: 'Costo variable ÷ conversiones.' },
-      ],
-      abort: [4.1, 4.2, 4.4, 4.7, 4.9, 5.1], over: [18, 19, 20, 21, 23, 24],
-      insights: [
-        { s: '61%', t: 'Del volumen de CRM es BAU o lifecycle. Es el área que sostiene el mix; la desviación viene de otro lado.' },
-        { s: '5.1%', t: 'Abort rate, el más bajo de las tres áreas. CRM ya diseña con el cap en mente.' },
-        { s: '$0.61', t: 'Costo por conversión más bajo del portafolio, con click rate al alza.' },
-      ],
-    },
-    pm: {
-      title: 'Gobernanza en Product Marketing',
-      kpis: [
-        { l: 'Usuarios contactados', v: '1.24M', d: '+9.8%', good: true, n: '59% de la base', def: 'Usuarios únicos con al menos un envío de PM.' },
-        { l: 'Conversiones atribuidas', v: '11.9K', d: '+31%', good: true, n: '1.0% sobre contactados', def: 'A 7 días de un envío de PM.' },
-        { l: 'Mensajes por usuario', v: '3', d: 'p99 · 9', flat: true, n: 'p50 · p90 6', def: 'Percentiles sobre envíos de PM.' },
-        { l: 'Abort rate en el piloto', v: '8.2%', d: '+1.1 pp', good: false, n: '14,800 bloqueados', def: 'Solo razones de cap.' },
-        { l: 'Click rate sobre entregados', v: '2.2%', d: '+0.1 pp', good: true, n: 'CTOR 9.8%', def: 'Clics únicos ÷ entregados.' },
-        { l: 'Costo por conversión', v: '$1.12', d: '+12%', good: false, n: 'costo $13,300', def: 'Costo variable ÷ conversiones.' },
-      ],
-      abort: [4.9, 5.2, 5.8, 6.4, 7.1, 8.2], over: [9, 10, 12, 15, 19, 26],
-      insights: [
-        { s: '86%', t: 'Del volumen de PM en junio fue ad-hoc. Cierre de trimestre y preparación de los lanzamientos GTM de Q3.' },
-        { s: '8.2%', t: 'Abort rate, el más alto y el que más crece. PM compite por slots que CRM ya consumió.' },
-        { s: '+31%', t: 'Conversiones al alza pese al bloqueo. Cuando llega el mensaje, funciona; el problema es que llegue.' },
-      ],
-    },
-    brand: {
-      title: 'Gobernanza en comunicaciones de Brand',
-      kpis: [
-        { l: 'Usuarios contactados', v: '0.91M', d: '+1.2%', good: true, n: '43% de la base', def: 'Usuarios únicos con al menos un envío de Brand.' },
-        { l: 'Conversiones atribuidas', v: '2.4K', d: '+6%', good: true, n: '0.3% sobre contactados', def: 'Brand no optimiza a conversión directa.' },
-        { l: 'Mensajes por usuario', v: '2', d: 'p99 · 5', flat: true, n: 'p50 · p90 3', def: 'Percentiles sobre envíos de Brand.' },
-        { l: 'Abort rate en el piloto', v: '6.9%', d: '+0.6 pp', good: false, n: '4,500 bloqueados', def: 'Solo razones de cap.' },
-        { l: 'Click rate sobre entregados', v: '1.6%', d: '0.0 pp', flat: true, n: 'CTOR 7.1%', def: 'Clics únicos ÷ entregados.' },
-        { l: 'Costo por conversión', v: '$2.05', d: '+4%', good: false, n: 'costo $4,970', def: 'Costo variable ÷ conversiones.' },
-      ],
-      abort: [5.3, 5.5, 5.8, 6.1, 6.3, 6.9], over: [6, 6, 7, 8, 9, 11],
-      insights: [
-        { s: '0.3%', t: 'Tasa de conversión. Brand construye marca, no convierte; medirlo con el mismo KPI que CRM es injusto para los dos.' },
-        { s: '6.9%', t: 'Abort rate en un área con 2 mensajes por usuario: sus envíos caen justo cuando el cap ya se agotó.' },
-        { s: 'Oct', t: 'Brand quiere entrar a WhatsApp, el canal con el cap más restrictivo. Vale la pena validar el retorno antes.' },
-      ],
-    },
+  const ACCENT='#00C06B', PREV='#C6D2CB', AMBER='#F2B84B', INK='#06231D', GRID='#EDF1EE', FAINT='#8A968F', RED='#B23A22';
+  const LABELS = {
+    year:  ['Jul 25','Ago','Sep','Oct','Nov','Dic','Ene 26','Feb','Mar','Abr','May','Jun'],
+    month: ['Ene','Feb','Mar','Abr','May','Jun'],
+    week:  ['S19','S20','S21','S22','S23','S24','S25','S26'],
   };
-  const MIX = { bau: [52, 50, 48, 44, 36, 14], adhoc: [30, 32, 34, 39, 48, 72], life: [18, 18, 18, 17, 16, 14] };
-  const WATER = [['Mayo', 32870], ['Braze DP', 7600], ['WhatsApp', 800], ['SMS', 200], ['Licencias', 0], ['Junio', 41470]];
+  // Series base (12 meses) por KPI. Los filtros aplican multiplicadores deterministas.
+  const BASE = {
+    contacted: [1.52,1.55,1.58,1.60,1.63,1.66,1.68,1.70,1.72,1.74,1.75,1.81],   // millones
+    conversions:[36.1,37.0,38.2,39.5,40.1,41.8,42.4,43.9,45.2,46.8,44.4,52.4], // miles
+    p50:[6,6,6,6,7,7,7,7,7,7,7,7], p90:[11,11,12,12,12,12,13,13,13,13,13,13],
+    abort:[4.0,4.1,4.3,4.4,4.5,4.6,4.6,4.8,5.1,5.5,6.0,6.4],
+    click:[2.3,2.3,2.4,2.4,2.5,2.5,2.4,2.5,2.5,2.6,2.6,2.8],
+    cpc:[0.62,0.63,0.62,0.65,0.66,0.68,0.66,0.67,0.69,0.71,0.74,0.79],
+    mixBau:[56,55,55,54,53,53,52,50,48,44,36,14], mixAdhoc:[26,27,27,28,29,29,30,32,34,39,48,72],
+  };
+  const MULT = {
+    area:    { todas:{c:1,k:1,a:1,cl:1,cp:1}, crm:{c:.9,k:.73,a:.8,cl:1.1,cp:.77}, pm:{c:.69,k:.23,a:1.28,cl:.79,cp:1.42}, brand:{c:.5,k:.046,a:1.08,cl:.57,cp:2.6} },
+    channel: { todos:{c:1,k:1,a:1,cl:1,cp:1}, email:{c:.54,k:.42,a:.28,cl:1,cp:.9}, push:{c:.88,k:.35,a:.33,cl:.57,cp:.6}, whatsapp:{c:.13,k:.12,a:2.3,cl:4.6,cp:1.9}, sms:{c:.25,k:.08,a:1.5,cl:1.5,cp:1.3}, inapp:{c:.6,k:.1,a:0,cl:2.5,cp:.3} },
+    mix:     { todos:{c:1,k:1,a:1,cl:1,cp:1}, bau:{c:.6,k:.72,a:.8,cl:1.15,cp:.8}, adhoc:{c:.55,k:.2,a:1.35,cl:.8,cp:1.5}, lifecycle:{c:.3,k:.12,a:.4,cl:1.3,cp:.7} },
+  };
   const ROWS = [
-    { c: 'Push', s: '16.2M', b: '338K', ar: '2.0%', sat: '26%', cap: '9', cr: 1.6, warn: false },
-    { c: 'In-app', s: '12.4M', b: '34K', ar: '0.3%', sat: '9%', cap: '9', cr: 6.9, warn: false },
-    { c: 'Email', s: '9.8M', b: '162K', ar: '1.6%', sat: '41%', cap: '5', cr: 2.8, warn: false },
-    { c: 'SMS', s: '533K', b: '5.1K', ar: '0.95%', sat: '74%', cap: '0.5', cr: 4.3, warn: true },
-    { c: 'WhatsApp', s: '282K', b: '4.2K', ar: '1.46%', sat: '88%', cap: '0.5', cr: 12.9, warn: true },
+    { c:'Push', s:'16.2M', b:'338K', ar:'2.0%', sat:'26%', cap:'9', cr:1.6, warn:false },
+    { c:'In-app', s:'12.4M', b:'34K', ar:'n/a', sat:'9%', cap:'9', cr:6.9, warn:false },
+    { c:'Email', s:'9.8M', b:'162K', ar:'1.6%', sat:'41%', cap:'5', cr:2.8, warn:false },
+    { c:'SMS', s:'533K', b:'5.1K', ar:'0.95%', sat:'74%', cap:'0.5', cr:4.3, warn:true },
+    { c:'WhatsApp', s:'282K', b:'4.2K', ar:'1.46%', sat:'88%', cap:'0.5', cr:12.9, warn:true },
+  ];
+  const state = { period:'month', area:'todas', channel:'todos', mix:'todos' };
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+  function series(key) {
+    const m = ['area','channel','mix'].map(f => MULT[f][state[f]]);
+    const k = {contacted:'c',conversions:'k',abort:'a',click:'cl',cpc:'cp'}[key];
+    let s = BASE[key].map(v => k ? v * m.reduce((p,x)=>p*x[k],1) : v);
+    if (state.period==='month') s = s.slice(-6);
+    if (state.period==='week') { const last = s[s.length-1], prev = s[s.length-2]; s = Array.from({length:8},(_,i)=> prev + (last-prev)*(i/7) + (i%2?0.012:-0.012)*last); }
+    return s;
+  }
+  function seriesRaw(key) { let s = BASE[key].slice(); if (state.period==='month') s=s.slice(-6); if (state.period==='week') { const l=s[s.length-1],p=s[s.length-2]; s=Array.from({length:8},(_,i)=>p+(l-p)*(i/7)); } return s; }
+  const fmtM = v => v>=1 ? v.toFixed(2)+'M' : Math.round(v*1000)+'K';
+  const fmtK = v => v.toFixed(1)+'K';
+  const fmtPct = v => v.toFixed(1)+'%';
+  const fmtUsd = v => '$'+v.toFixed(2);
+  function delta(s, pct=true) { const a=s[s.length-2], b=s[s.length-1]; if (!a) return {t:'sin cambio',cls:'flat'}; const d = pct ? (b/a-1)*100 : b-a; const t = pct ? (d>=0?'+':'')+d.toFixed(1)+'%' : (d>=0?'+':'')+d.toFixed(1)+' pp'; return {t, d}; }
+
+  const KPIS = [
+    { key:'contacted', l:'Usuarios contactados', fmt:fmtM, goodUp:true, chart:'bar', def:'Usuarios únicos con al menos un envío en el periodo, cualquier canal.', unit:'millones' },
+    { key:'conversions', l:'Conversiones atribuidas', fmt:fmtK, goodUp:true, def:'A 7 días de un envío. Sin experimento no es incremental.', unit:'miles' },
+    { key:'p50', l:'Mensajes por usuario (p50 · p90)', custom:true, def:'Percentiles, no promedio. El promedio oculta la cola sobre-impactada.' },
+    { key:'abort', l:'Abort rate en el piloto', fmt:fmtPct, goodUp:false, pp:true, def:'aborts ÷ (envíos + aborts) en el 10% gobernado. Solo razones de cap.', unit:'%', band:[4,6] },
+    { key:'click', l:'Click rate sobre entregados', fmt:fmtPct, goodUp:true, pp:true, chart:'bar', def:'Clics únicos ÷ entregados. No usa aperturas por Apple MPP.', unit:'%' },
+    { key:'cpc', l:'Costo por conversión', fmt:fmtUsd, goodUp:false, chart:'bar', def:'Costo variable (DP + WhatsApp + SMS) ÷ conversiones atribuidas.', unit:'USD' },
   ];
 
-  const state = { area: 'todas', n: 6 };
-  const $ = id => document.getElementById(id);
-  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-
-  function lineChart(cur, prev, labels) {
-    const W = 780, H = 260, PL = 46, PR = 8, PT = 14, PB = 28;
-    const max = Math.max(...cur.concat(prev)) * 1.12, min = 0;
-    const x = i => PL + (i * (W - PL - PR)) / Math.max(1, cur.length - 1);
-    const y = v => PT + (1 - (v - min) / (max - min)) * (H - PT - PB);
-    const line = a => a.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
-    const area = line(cur) + ' L ' + x(cur.length - 1).toFixed(1) + ' ' + (H - PB) + ' L ' + PL + ' ' + (H - PB) + ' Z';
-    let s = `<svg viewBox="0 0 ${W} ${H}"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${ACCENT}" stop-opacity="0.22"/><stop offset="100%" stop-color="${ACCENT}" stop-opacity="0"/></linearGradient></defs>`;
-    [0, 0.5, 1].map(t => min + t * (max - min)).forEach(t => { s += `<line x1="${PL}" x2="${W - PR}" y1="${y(t)}" y2="${y(t)}" stroke="${GRID}"/><text x="${PL - 12}" y="${y(t) + 4}" text-anchor="end" font-size="11" fill="${FAINT}">${t.toFixed(0)}%</text>`; });
-    s += `<path d="${area}" fill="url(#g)"/>`;
-    s += `<path d="${line(prev)}" fill="none" stroke="${PREV}" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round"/>`;
-    s += `<path d="${line(cur)}" fill="none" stroke="${ACCENT}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
-    cur.forEach((v, i) => { const last = i === cur.length - 1; s += `<circle cx="${x(i)}" cy="${y(v)}" r="${last ? 5.5 : 3}" fill="${last ? ACCENT : '#fff'}" stroke="${ACCENT}" stroke-width="2"/>`; if (last) s += `<text x="${x(i) - 10}" y="${y(v) - 12}" text-anchor="end" font-size="12" font-weight="800" fill="${INK}">${v}%</text>`; });
-    prev.forEach((v, i) => { if (i === prev.length - 1) s += `<text x="${x(i) - 10}" y="${y(v) - 10}" text-anchor="end" font-size="12" font-weight="700" fill="${FAINT}">${v}%</text>`; });
-    labels.forEach((m, i) => { s += `<text x="${x(i)}" y="${H - 6}" text-anchor="middle" font-size="11" fill="${FAINT}">${m}</text>`; });
-    return s + '</svg>';
+  function lineChart(cur, labels, opt={}) {
+    const W=560, H=200, PL=48, PR=8, PT=14, PB=26;
+    const all = cur.concat(opt.second||[]);
+    const max = Math.max(...all)*1.15, min = opt.zero===false ? Math.min(...all)*0.85 : 0;
+    const x = i => PL + i*(W-PL-PR)/Math.max(1,cur.length-1);
+    const y = v => PT + (1-(v-min)/(max-min||1))*(H-PT-PB);
+    const line = a => a.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join(' ');
+    let s = `<svg viewBox="0 0 ${W} ${H}"><defs><linearGradient id="g${opt.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${ACCENT}" stop-opacity=".2"/><stop offset="100%" stop-color="${ACCENT}" stop-opacity="0"/></linearGradient></defs>`;
+    if (opt.band) { s += `<rect x="${PL}" y="${y(opt.band[1])}" width="${W-PL-PR}" height="${y(opt.band[0])-y(opt.band[1])}" fill="rgba(0,192,107,.08)"/>`; }
+    [0,.5,1].map(t=>min+t*(max-min)).forEach(t=>{ s+=`<line x1="${PL}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke="${GRID}"/><text x="${PL-10}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="${FAINT}">${opt.tick?opt.tick(t):t.toFixed(1)}</text>`; });
+    s += `<path d="${line(cur)} L ${x(cur.length-1).toFixed(1)} ${H-PB} L ${PL} ${H-PB} Z" fill="url(#g${opt.id})"/>`;
+    if (opt.second) s += `<path d="${line(opt.second)}" fill="none" stroke="${PREV}" stroke-width="2" stroke-dasharray="5 5"/>`;
+    s += `<path d="${line(cur)}" fill="none" stroke="${ACCENT}" stroke-width="2.5" stroke-linejoin="round"/>`;
+    cur.forEach((v,i)=>{ const last=i===cur.length-1; s+=`<circle cx="${x(i)}" cy="${y(v)}" r="${last?5:2.5}" fill="${last?ACCENT:'#fff'}" stroke="${ACCENT}" stroke-width="2"/>`; if(last) s+=`<text x="${x(i)-9}" y="${y(v)-11}" text-anchor="end" font-size="12" font-weight="800" fill="${INK}">${opt.fmt?opt.fmt(v):v}</text>`; });
+    labels.forEach((m,i)=>{ if (labels.length>8 && i%2) return; s+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle" font-size="11" fill="${FAINT}">${m}</text>`; });
+    return s+'</svg>';
   }
-
-  function stackedBars(labels) {
-    const W = 560, H = 220, PL = 40, PR = 8, PT = 12, PB = 28, n = labels.length;
-    const bw = (W - PL - PR) / n, gap = bw * 0.28;
-    const y = v => PT + (1 - v / 100) * (H - PT - PB);
+  function barChart(cur, labels, opt={}) {
+    const W=560, H=200, PL=48, PR=8, PT=16, PB=26, n=cur.length;
+    const max = Math.max(...cur)*1.15, min = 0;
+    const bw=(W-PL-PR)/n, gap=bw*0.34;
+    const y = v => PT + (1-(v-min)/(max-min||1))*(H-PT-PB);
     let s = `<svg viewBox="0 0 ${W} ${H}">`;
-    [0, 50, 100].forEach(t => { s += `<line x1="${PL}" x2="${W - PR}" y1="${y(t)}" y2="${y(t)}" stroke="${GRID}"/><text x="${PL - 10}" y="${y(t) + 4}" text-anchor="end" font-size="11" fill="${FAINT}">${t}%</text>`; });
-    labels.forEach((m, i) => {
-      const k = MIX.bau.length - n + i;
-      const x0 = PL + i * bw + gap / 2, w = bw - gap;
-      let acc = 0;
-      [[MIX.bau[k], ACCENT], [MIX.adhoc[k], AMBER], [MIX.life[k], PREV]].forEach(([v, c]) => {
-        s += `<rect x="${x0}" y="${y(acc + v)}" width="${w}" height="${y(acc) - y(acc + v)}" fill="${c}" rx="3"/>`; acc += v;
-      });
-      s += `<text x="${x0 + w / 2}" y="${H - 6}" text-anchor="middle" font-size="11" fill="${FAINT}">${m}</text>`;
-      s += `<text x="${x0 + w / 2}" y="${y(MIX.bau[k]) + 15}" text-anchor="middle" font-size="11" font-weight="800" fill="#fff">${MIX.bau[k]}%</text>`;
-    });
-    s += `<line x1="${PL}" x2="${W - PR}" y1="${y(60)}" y2="${y(60)}" stroke="${INK}" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W - PR}" y="${y(60) - 6}" text-anchor="end" font-size="11" font-weight="700" fill="${INK}">meta 60% BAU</text>`;
-    return s + '</svg>';
+    [0,.5,1].map(t=>min+t*(max-min)).forEach(t=>{ s+=`<line x1="${PL}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke="${GRID}"/><text x="${PL-10}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="${FAINT}">${opt.tick?opt.tick(t):t.toFixed(1)}</text>`; });
+    cur.forEach((v,i)=>{ const x0=PL+i*bw+gap/2, w=bw-gap, last=i===n-1;
+      s+=`<rect x="${x0}" y="${y(v)}" width="${w}" height="${(H-PB)-y(v)}" rx="4" fill="${last?ACCENT:'#BFE9D6'}"/>`;
+      if (last) s+=`<text x="${x0+w/2}" y="${y(v)-7}" text-anchor="middle" font-size="12" font-weight="800" fill="${INK}">${opt.fmt?opt.fmt(v):v}</text>`;
+      if (labels.length<=8 || i%2===0) s+=`<text x="${x0+w/2}" y="${H-6}" text-anchor="middle" font-size="11" fill="${FAINT}">${labels[i]}</text>`; });
+    return s+'</svg>';
   }
-
-  function waterfall() {
-    const W = 560, H = 220, PL = 50, PR = 8, PT = 18, PB = 28, n = WATER.length;
-    const min = 30000, max = 43000;
-    const bw = (W - PL - PR) / n, gap = bw * 0.3;
-    const y = v => PT + (1 - (v - min) / (max - min)) * (H - PT - PB);
-    let s = `<svg viewBox="0 0 ${W} ${H}">`;
-    [30000, 35000, 40000].forEach(t => { s += `<line x1="${PL}" x2="${W - PR}" y1="${y(t)}" y2="${y(t)}" stroke="${GRID}"/><text x="${PL - 10}" y="${y(t) + 4}" text-anchor="end" font-size="11" fill="${FAINT}">$${t / 1000}K</text>`; });
-    let run = WATER[0][1];
-    WATER.forEach(([k, v], i) => {
-      const x0 = PL + i * bw + gap / 2, w = bw - gap;
-      let a, b, c;
-      if (i === 0 || i === n - 1) { a = min; b = v; c = i === 0 ? PREV : INK; }
-      else { a = run; b = run + v; run = b; c = v > 0 ? AMBER : ACCENT; }
-      const top = Math.min(y(a), y(b)), h = Math.max(2, Math.abs(y(a) - y(b)));
-      s += `<rect x="${x0}" y="${top}" width="${w}" height="${h}" fill="${c}" rx="3"/>`;
-      const lbl = (i === 0 || i === n - 1) ? '$' + v.toLocaleString('en-US') : (v ? '+$' + v.toLocaleString('en-US') : '$0');
-      s += `<text x="${x0 + w / 2}" y="${top - 6}" text-anchor="middle" font-size="11" font-weight="700" fill="${INK}">${lbl}</text>`;
-      s += `<text x="${x0 + w / 2}" y="${H - 6}" text-anchor="middle" font-size="11" fill="${FAINT}">${k}</text>`;
-    });
-    return s + '</svg>';
+  function stackedMix(labels) {
+    const bau=seriesRaw('mixBau'), ad=seriesRaw('mixAdhoc'); const W=560,H=200,PL=40,PR=8,PT=12,PB=26,n=labels.length,bw=(W-PL-PR)/n,gap=bw*.3;
+    const y=v=>PT+(1-v/100)*(H-PT-PB); let s=`<svg viewBox="0 0 ${W} ${H}">`;
+    [0,50,100].forEach(t=>{s+=`<line x1="${PL}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke="${GRID}"/><text x="${PL-10}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="${FAINT}">${t}%</text>`;});
+    labels.forEach((m,i)=>{ const x0=PL+i*bw+gap/2,w=bw-gap; let acc=0; const b=Math.round(bau[i]),a=Math.round(ad[i]),l=100-b-a;
+      [[b,ACCENT],[a,AMBER],[l,PREV]].forEach(([v,c])=>{ s+=`<rect x="${x0}" y="${y(acc+v)}" width="${w}" height="${y(acc)-y(acc+v)}" fill="${c}" rx="3"/>`; acc+=v; });
+      if (labels.length<=8 || i%2===0) s+=`<text x="${x0+w/2}" y="${H-6}" text-anchor="middle" font-size="11" fill="${FAINT}">${m}</text>`;
+      s+=`<text x="${x0+w/2}" y="${y(b)+14}" text-anchor="middle" font-size="10.5" font-weight="800" fill="#fff">${b}%</text>`; });
+    s+=`<line x1="${PL}" x2="${W-PR}" y1="${y(60)}" y2="${y(60)}" stroke="${INK}" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W-PR}" y="${y(60)-6}" text-anchor="end" font-size="11" font-weight="700" fill="${INK}">meta 60% BAU</text>`;
+    return s+'</svg>';
   }
 
   function render() {
-    const d = DATA[state.area], n = state.n;
-    $('title').textContent = d.title;
-    $('cards').innerHTML = d.kpis.map(k => `
-      <div class="card"><span class="l">${esc(k.l)}</span><span class="v">${esc(k.v)}</span>
-        <div class="d"><span class="pill ${k.flat ? 'flat' : (k.good ? 'good' : 'bad')}">${esc(k.d)}</span><span class="n">${esc(k.n)}</span></div>
-        <span class="def">${esc(k.def)}</span></div>`).join('');
-    const rng = MESES.slice(-n)[0] + ' a ' + MESES[MESES.length - 1] + ' 2026 · ' + n + ' meses';
-    $('mainRange').textContent = 'Porcentaje mensual, usuarios CREDIT en el piloto · ' + rng;
-    $('mixRange').textContent = 'Meta del modelo: 60% BAU / 40% ad-hoc · ' + rng;
-    $('mainChart').innerHTML = lineChart(d.abort.slice(-n), d.over.slice(-n), MESES.slice(-n));
-    $('insights').innerHTML = d.insights.map(i => `<div class="ins"><b>${esc(i.s)}</b><span>${esc(i.t)}</span></div>`).join('');
-    $('mixChart').innerHTML = stackedBars(MESES.slice(-n));
-    $('waterChart').innerHTML = waterfall();
-    const maxCr = Math.max(...ROWS.map(r => r.cr));
-    $('rows').innerHTML = ROWS.map(r => `
-      <tr><td>${r.c}</td><td>${r.s}</td><td>${r.b}</td><td>${r.ar}</td><td style="font-weight:700;color:${r.warn ? 'var(--warn)' : 'inherit'}">${r.sat}</td><td>${r.cap}</td>
-      <td><div style="display:flex;align-items:center;gap:10px"><span style="min-width:44px;text-align:right;font-weight:700">${r.cr}%</span><div class="bar" style="flex:1"><i class="${r.warn ? 'warn' : ''}" style="width:${(r.cr / maxCr * 100).toFixed(0)}%"></i></div></div></td></tr>`).join('');
+    const labels = LABELS[state.period];
+    const rangeTxt = {year:'últimos 12 meses',month:'últimos 6 meses',week:'últimas 8 semanas'}[state.period];
+    const per = {year:'mes',month:'mes',week:'semana'}[state.period];
+    // tarjetas
+    $('cards').innerHTML = KPIS.map(k => {
+      if (k.custom) { const p50=seriesRaw('p50'), p90=seriesRaw('p90'); const v=p50[p50.length-1], w=p90[p90.length-1];
+        return `<div class="card"><span class="l">${k.l}</span><span class="v">${v} <span style="font-size:16px;font-weight:600;color:var(--muted)">· ${w}</span></span><div class="d"><span class="pill flat">p99 · ${w+8}</span><span class="n">por ${per}</span></div><span class="def">${k.def}</span></div>`; }
+      const s=series(k.key), d=delta(s,!k.pp); const good = k.goodUp ? d.d>=0 : d.d<=0; const cls = Math.abs(d.d)<0.05 ? 'flat' : (good?'good':'bad');
+      return `<div class="card"><span class="l">${esc(k.l)}</span><span class="v">${k.fmt(s[s.length-1])}</span><div class="d"><span class="pill ${cls}">${d.t}</span><span class="n">vs ${per} anterior</span></div><span class="def">${esc(k.def)}</span></div>`;
+    }).join('');
+    // históricos
+    $('history').innerHTML = KPIS.map((k,i) => {
+      let chart;
+      if (k.custom) chart = lineChart(seriesRaw('p90'), labels, {id:i, second:seriesRaw('p50'), tick:t=>t.toFixed(0), fmt:v=>v.toFixed(0)});
+      else if (k.chart==='bar') chart = barChart(series(k.key), labels, {fmt:k.fmt, tick: t => k.fmt(t)});
+      else chart = lineChart(series(k.key), labels, {id:i, fmt:k.fmt, band:k.band, tick: t => k.fmt(t)});
+      const leg = k.custom ? `<div class="legend"><span><i style="background:${ACCENT}"></i>p90</span><span><i style="background:${PREV}"></i>p50</span></div>` : (k.band?`<div class="legend"><span><i style="background:rgba(0,192,107,.25)"></i>banda objetivo ${k.band[0]}–${k.band[1]}%</span></div>`:'');
+      return `<div class="panel"><div class="panel-head"><div><h2>${esc(k.l)}</h2><span class="u">Histórico · ${rangeTxt}${k.unit?' · '+k.unit:''}</span></div>${leg}</div>${chart}</div>`;
+    }).join('');
+    $('mixRange').textContent = 'Meta del modelo: 60% BAU / 40% ad-hoc · ' + rangeTxt;
+    $('mixChart').innerHTML = stackedMix(labels);
+    const a = series('abort'), bau = seriesRaw('mixBau');
+    $('insights').innerHTML = [
+      {s: fmtPct(a[a.length-1]), t:'Abort rate en el piloto en el último periodo, con tendencia al alza en la ventana seleccionada.'},
+      {s: Math.round(bau[bau.length-1])+'%', t:'Participación BAU en el último periodo frente a una meta de 60%. La brecha se debe validar contra el denominador acordado.'},
+      {s: fmtK(series('conversions').slice(-1)[0]), t:'Conversiones atribuidas en el último periodo. Sin experimento, no es incremental.'},
+    ].map(i=>`<div class="ins"><b>${i.s}</b><span>${i.t}</span></div>`).join('');
+    const maxCr = Math.max(...ROWS.map(r=>r.cr));
+    $('rows').innerHTML = ROWS.map(r=>`<tr><td>${r.c}</td><td>${r.s}</td><td>${r.b}</td><td>${r.ar}</td><td style="font-weight:700;color:${r.warn?'var(--warn)':'inherit'}">${r.sat}</td><td>${r.cap}</td><td><div style="display:flex;align-items:center;gap:10px"><span style="min-width:44px;text-align:right;font-weight:700">${r.cr}%</span><div class="bar" style="flex:1"><i class="${r.warn?'warn':''}" style="width:${(r.cr/maxCr*100).toFixed(0)}%"></i></div></div></td></tr>`).join('');
+    const areaName = {todas:'todas las áreas',crm:'CRM',pm:'Product Marketing',brand:'Brand'}[state.area];
+    $('title').textContent = 'Cómo va el modelo de gobernanza · ' + areaName;
   }
-
-  $('areaChips').addEventListener('click', e => { const b = e.target.closest('button[data-area]'); if (!b) return;
-    state.area = b.dataset.area; [...$('areaChips').querySelectorAll('button')].forEach(x => x.classList.toggle('on', x === b)); render(); });
-  $('periodSeg').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if (!b) return;
-    state.n = +b.dataset.n; [...$('periodSeg').querySelectorAll('button')].forEach(x => x.classList.toggle('on', x === b)); render(); });
+  [['fPeriod','period'],['fArea','area'],['fChannel','channel'],['fMix','mix']].forEach(([id,key])=>{
+    $(id).addEventListener('change', e=>{ state[key]=e.target.value; render(); });
+  });
   render();
 })();
 </script>
-</body>
-</html>
+</body></html>
